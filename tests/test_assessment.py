@@ -38,3 +38,13 @@ def test_v2_contains_all_granular_visual_parameters():
     assert len(weeds) == 8
     assert weeds[0]["parameter"] == "Gulma radius dekat pangkal"
     assert weeds[-1]["value"] == "Pemeliharaan rutin"
+    microclimate = assessment["microclimate_parameters"]
+    assert len(microclimate) == 11
+    assert microclimate[0]["parameter"] == "Intensitas cahaya saat foto"
+    assert microclimate[0]["value"] == "Tinggi"
+    assert any(
+        item["parameter"] == "Suhu udara"
+        and item["evidence_status"] == "REQUIRES_MEASUREMENT"
+        and item["confidence"] is None
+        for item in microclimate
+    )

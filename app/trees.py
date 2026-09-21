@@ -89,6 +89,9 @@ def inspection(tree_id):
                 ),
                 soil_parameters=assessment_payload.get("soil_parameters", []),
                 weed_parameters=assessment_payload.get("weed_parameters", []),
+                microclimate_parameters=assessment_payload.get(
+                    "microclimate_parameters", []
+                ),
             )
         except SQLAlchemyError:
             db.session.rollback()

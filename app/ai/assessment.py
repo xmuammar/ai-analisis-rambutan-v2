@@ -116,6 +116,26 @@ def _weed_parameters() -> list[dict]:
     ]
 
 
+def _microclimate_parameters() -> list[dict]:
+    values = (
+        ("capture_light_intensity", "Intensitas cahaya saat foto", "Tinggi", "OBSERVED", 0.96),
+        ("direct_sunlight", "Penyinaran langsung", "Ya", "OBSERVED", 0.99),
+        ("capture_shade", "Naungan pada saat foto", "Rendah pada pohon utama", "OBSERVED", 0.90),
+        ("soil_surface_heat_potential", "Potensi panas permukaan tanah", "Tinggi saat cuaca cerah", "INTERPRETATION", 0.82),
+        ("surface_evaporation", "Evaporasi permukaan", "Berpotensi tinggi", "INTERPRETATION", 0.76),
+        ("surrounding_wall", "Dinding sekitar", "Dapat memengaruhi pola panas/naungan sepanjang hari", "CONTEXTUAL", 0.68),
+        ("air_circulation", "Sirkulasi udara", "Tidak dapat dinilai akurat dari foto", "REQUIRES_VERIFICATION", None),
+        ("air_temperature", "Suhu udara", "Tidak dapat dihitung", "REQUIRES_MEASUREMENT", None),
+        ("soil_temperature", "Suhu tanah", "Tidak diketahui", "REQUIRES_MEASUREMENT", None),
+        ("air_humidity", "RH/kelembapan udara", "Tidak diketahui", "REQUIRES_MEASUREMENT", None),
+        ("wind_speed", "Kecepatan angin", "Tidak diketahui", "REQUIRES_MEASUREMENT", None),
+    )
+    return [
+        _parameter(key, label, value, evidence, confidence)
+        for key, label, value, evidence, confidence in values
+    ]
+
+
 def _parameter_with_interpretation(
     key: str,
     label: str,
@@ -307,6 +327,7 @@ def build_assessment(
     architecture_parameters = _architecture_parameters()
     soil_parameters = _soil_parameters()
     weed_parameters = _weed_parameters()
+    microclimate_parameters = _microclimate_parameters()
 
     return {
         "analysis_type": "rambutan_field_visual_assessment",
@@ -326,6 +347,7 @@ def build_assessment(
         "architecture_parameters": architecture_parameters,
         "soil_parameters": soil_parameters,
         "weed_parameters": weed_parameters,
+        "microclimate_parameters": microclimate_parameters,
         "geometry": {
             "height": {
                 "estimated_min_cm": 150 if not manual.get("height_cm") else None,
