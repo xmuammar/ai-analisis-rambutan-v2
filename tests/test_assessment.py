@@ -34,3 +34,7 @@ def test_v2_contains_all_granular_visual_parameters():
         and item["confidence"] is None
         for item in soil
     )
+    weeds = assessment["weed_parameters"]
+    assert len(weeds) == 8
+    assert weeds[0]["parameter"] == "Gulma radius dekat pangkal"
+    assert weeds[-1]["value"] == "Pemeliharaan rutin"

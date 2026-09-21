@@ -99,6 +99,23 @@ def _soil_parameters() -> list[dict]:
     ]
 
 
+def _weed_parameters() -> list[dict]:
+    values = (
+        ("near_trunk_weed", "Gulma radius dekat pangkal", "Rendah", "SCREENING", 0.92),
+        ("outer_zone_weed", "Gulma zona luar", "Sedang", "SCREENING", 0.89),
+        ("surrounding_vegetation_cover", "Penutupan vegetasi sekitar", "Sedang", "ESTIMATED", 0.84),
+        ("light_competition", "Kompetisi cahaya terhadap pohon utama", "Rendah", "ESTIMATED", 0.86),
+        ("potential_water_competition", "Kompetisi air potensial", "Rendah–sedang", "ESTIMATED", 0.73),
+        ("potential_nutrient_competition", "Kompetisi nutrisi potensial", "Rendah–sedang", "ESTIMATED", 0.73),
+        ("stem_contact_weed_risk", "Risiko gulma menyentuh batang", "Rendah saat foto", "OBSERVED", 0.88),
+        ("weed_control_need", "Kebutuhan pengendalian gulma", "Pemeliharaan rutin", "INTERPRETATION", 0.82),
+    )
+    return [
+        _parameter(key, label, value, evidence, confidence)
+        for key, label, value, evidence, confidence in values
+    ]
+
+
 def _parameter_with_interpretation(
     key: str,
     label: str,
@@ -289,6 +306,7 @@ def build_assessment(
     ]
     architecture_parameters = _architecture_parameters()
     soil_parameters = _soil_parameters()
+    weed_parameters = _weed_parameters()
 
     return {
         "analysis_type": "rambutan_field_visual_assessment",
@@ -307,6 +325,7 @@ def build_assessment(
         "extracted_parameters": extracted_parameters,
         "architecture_parameters": architecture_parameters,
         "soil_parameters": soil_parameters,
+        "weed_parameters": weed_parameters,
         "geometry": {
             "height": {
                 "estimated_min_cm": 150 if not manual.get("height_cm") else None,
