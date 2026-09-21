@@ -211,6 +211,34 @@ def _parameter_with_interpretation(
     return result
 
 
+def _plant_status_indices() -> list[dict]:
+    values = (
+        ("leaf_vitality", "Vitalitas daun", "Baik", "SCREENING", 0.84),
+        ("vegetative_activity", "Aktivitas vegetatif", "Baik", "SCREENING", 0.82),
+        ("canopy_density", "Kepadatan tajuk", "Sedang", "ESTIMATED", 0.87),
+        ("stem_structure", "Struktur batang", "Cukup baik tetapi masih ramping", "OBSERVED", 0.86),
+        ("branching", "Percabangan", "Sedang", "OBSERVED", 0.84),
+        ("collar_cleanliness", "Kebersihan pangkal", "Baik", "SCREENING", 0.86),
+        ("surface_soil_condition", "Kondisi tanah permukaan", "Perlu perhatian", "SCREENING", 0.82),
+        ("weed_pressure", "Tekanan gulma", "Rendah–sedang", "SCREENING", 0.86),
+        ("visual_pest_pressure", "Tekanan hama visual", "Rendah", "SCREENING", 0.84),
+        ("visual_disease_pressure", "Tekanan penyakit visual", "Rendah", "SCREENING", 0.83),
+        ("light_availability", "Ketersediaan cahaya", "Sangat baik", "OBSERVED", 0.94),
+        ("reproductive_status", "Status reproduktif", "Belum terdeteksi", "SCREENING", 0.78),
+        ("overall_visual_condition", "Kondisi keseluruhan visual", "Cukup baik–baik", "SCREENING", 0.84),
+    )
+    return [
+        {
+            "key": key,
+            "index": label,
+            "status": status,
+            "evidence_status": evidence,
+            "confidence": confidence,
+        }
+        for key, label, status, evidence, confidence in values
+    ]
+
+
 def build_assessment(
     fields: dict | None = None,
     *,
@@ -392,6 +420,7 @@ def build_assessment(
     microclimate_parameters = _microclimate_parameters()
     pest_disease_screening = _pest_disease_screening()
     agronomic_risks = _agronomic_risks()
+    plant_status_indices = _plant_status_indices()
 
     return {
         "analysis_type": "rambutan_field_visual_assessment",
@@ -414,6 +443,7 @@ def build_assessment(
         "microclimate_parameters": microclimate_parameters,
         "pest_disease_screening": pest_disease_screening,
         "agronomic_risks": agronomic_risks,
+        "plant_status_indices": plant_status_indices,
         "geometry": {
             "height": {
                 "estimated_min_cm": 150 if not manual.get("height_cm") else None,

@@ -65,3 +65,8 @@ def test_v2_contains_all_granular_visual_parameters():
         and item["confidence"] is None
         for item in risks
     )
+    indices = assessment["plant_status_indices"]
+    assert len(indices) == 13
+    assert indices[0]["index"] == "Vitalitas daun"
+    assert indices[0]["status"] == "Baik"
+    assert indices[-1]["status"] == "Cukup baik–baik"
