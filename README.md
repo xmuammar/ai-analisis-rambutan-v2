@@ -10,7 +10,7 @@ Flutter Web, atau Node.js sebagai application server.
 - SQLAlchemy dan Flask-Migrate (Alembic)
 - Flask-WTF untuk form/CSRF
 - Flask-Login untuk autentikasi lokal
-- SQLite sebagai development default; `DATABASE_URL` dapat diarahkan ke PostgreSQL
+- PostgreSQL sebagai database runtime versi 2; SQLite hanya dipakai untuk test dan sumber ETL legacy
 - Rule engine dan Virtual Soil Sensor sebagai baseline yang eksplisit, tanpa fake computer vision
 - AI provider abstraction, feature versioning, confidence engine, XAI evidence, image quality,
   model manifest/checksum, ML trend/anomaly/ensemble primitives, dan backup integrity
@@ -62,7 +62,7 @@ PostgreSQL memiliki hak `CONNECT`, `CREATE` pada database, dan `USAGE, CREATE` p
 schema target. Contoh:
 
 ```bash
-createdb ai_analis_rambutan
+createdb ai_rambutan
 export DATABASE_URL='postgresql+psycopg://app_user:password@localhost:5432/ai_analis_rambutan'
 export AUTO_CREATE_SCHEMA=0
 flask --app run.py db current
