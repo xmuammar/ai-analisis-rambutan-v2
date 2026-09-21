@@ -310,8 +310,16 @@ def test_reports_render_legacy_assessment_without_new_governance_fields(client):
 
 def test_reports_exports_and_analytics(client):
     assert client.get("/analytics").status_code == 200
-    assert client.get("/reports/export.xlsx").status_code == 200
-    assert client.get("/reports/export.pdf").status_code == 200
+    xlsx = client.get("/reports/export.xlsx")
+    assert xlsx.status_code == 200
+    assert xlsx.mimetype == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert xlsx.data.startswith(b"PK")
+    assert "attachment" in xlsx.headers["Content-Disposition"]
+    pdf = client.get("/reports/export.pdf")
+    assert pdf.status_code == 200
+    assert pdf.mimetype == "application/pdf"
+    assert pdf.data.startswith(b"%PDF-")
+    assert "attachment" in pdf.headers["Content-Disposition"]
 
 
 def test_ai_lab_exposes_professional_model_governance(client):

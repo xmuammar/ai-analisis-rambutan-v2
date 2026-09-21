@@ -831,6 +831,14 @@ def reports_excel():
     from openpyxl.styles import Font, PatternFill
 
     rows = _export_rows()
+
+    def excel_value(value):
+        if isinstance(value, (dict, list, tuple)):
+            return json.dumps(value, ensure_ascii=False, sort_keys=True)
+        if value is None:
+            return ""
+        return value
+
     workbook = Workbook()
     summary = workbook.active
     summary.title = "Ringkasan"
@@ -847,10 +855,10 @@ def reports_excel():
                 row["observation"].observation_datetime.isoformat()
                 if row["observation"]
                 else "",
-                payload.get("agronomic_assessment", {}).get(
+                excel_value(payload.get("agronomic_assessment", {}).get(
                     "overall_visual_status", "unknown"
-                ),
-                payload.get("analysis_version", ""),
+                )),
+                excel_value(payload.get("analysis_version", "")),
             ]
         )
     details = workbook.create_sheet("Parameter")
@@ -874,9 +882,9 @@ def reports_excel():
                         row["tree"].code,
                         group,
                         item.get("parameter", item.get("risk", item.get("index", ""))),
-                        item.get("value", item.get("status", item.get("level", ""))),
-                        item.get("evidence_status", ""),
-                        item.get("confidence"),
+                        excel_value(item.get("value", item.get("status", item.get("level", "")))),
+                        excel_value(item.get("evidence_status", "")),
+                        excel_value(item.get("confidence")),
                     ]
                 )
     for sheet in workbook.worksheets:
@@ -904,6 +912,7 @@ def reports_pdf():
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.lib.units import mm
     from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from xml.sax.saxutils import escape
 
     rows = _export_rows()
     output = BytesIO()
@@ -925,6 +934,8 @@ def reports_pdf():
         Spacer(1, 8 * mm),
     ]
     data = [["Pohon", "Observasi", "Status visual", "Confidence", "Risiko utama"]]
+    if not rows:
+        data.append(["-", "-", "Belum ada assessment", "-", "Belum ada data untuk diekspor"])
     for row in rows:
         payload = row["payload"]
         risks = payload.get("agronomic_risks", [])
@@ -946,7 +957,7 @@ def reports_pdf():
                     "overall_visual_status", "unknown"
                 ),
                 f"{sum(confidences) / len(confidences):.0%}" if confidences else "-",
-                Paragraph(risk_text, styles["BodyText"]),
+                Paragraph(escape(risk_text), styles["BodyText"]),
             ]
         )
     table = Table(data, repeatRows=1, colWidths=[28 * mm, 30 * mm, 42 * mm, 25 * mm, 130 * mm])
