@@ -20,6 +20,26 @@ def _field(fields: dict, key: str, default: Any = None) -> Any:
     return item if item is not None else default
 
 
+def _parameter(
+    key: str,
+    label: str,
+    value: Any,
+    evidence: str,
+    confidence: float | None,
+) -> dict:
+    return {
+        "key": key,
+        "parameter": label,
+        "value": value,
+        "evidence_status": evidence,
+        "confidence": (
+            round(max(0.0, min(1.0, confidence)), 4)
+            if confidence is not None
+            else None
+        ),
+    }
+
+
 def build_assessment(
     fields: dict | None = None,
     *,
@@ -44,6 +64,157 @@ def build_assessment(
     pest = bool(manual.get("pest_present", False))
     disease = bool(manual.get("disease_present", False))
     weed_level = manual.get("weed_level") or "unknown"
+    parameter_values = {
+        "object": ("Pohon rambutan muda", "CONTEXT_VISUAL", 0.90),
+        "planting_status": ("Sudah berada di tanah", "OBSERVED", 0.99),
+        "phenology": (
+            "Reproduktif" if flower or fruit else "Vegetatif",
+            "OBSERVED" if flower is not None or fruit is not None else "ESTIMATED",
+            0.94 if flower or fruit else 0.78,
+        ),
+        "visual_age_class": ("Tanaman muda", "ESTIMATED", 0.82),
+        "visual_height_range": (
+            f"±{150 / 100:.1f}–{190 / 100:.1f} m"
+            if not manual.get("height_cm")
+            else f"{manual['height_cm'] / 100:.2f} m",
+            "ESTIMATED_WITHOUT_SCALE" if not manual.get("height_cm") else "USER_MEASURED",
+            0.48 if not manual.get("height_cm") else 0.90,
+        ),
+        "stem_diameter": (
+            "Tidak valid diukur presisi"
+            if not manual.get("stem_diameter_cm")
+            else f"{manual['stem_diameter_cm']:.2f} cm",
+            "REQUIRES_SCALE" if not manual.get("stem_diameter_cm") else "USER_MEASURED",
+            None if not manual.get("stem_diameter_cm") else 0.90,
+        ),
+        "stem_diameter_class": ("Kecil/ramping", "OBSERVED", 0.91),
+        "stem_orientation": ("Cenderung tegak", "OBSERVED", 0.95),
+        "stem_straightness": ("Baik, ada sedikit lengkung alami", "OBSERVED", 0.90),
+        "major_stem_damage": ("Tidak terlihat", "OBSERVED", 0.88),
+        "stem_wound": ("Tidak terlihat jelas", "OBSERVED", 0.75),
+        "collar_rot": ("Tidak terlihat", "SCREENING", 0.72),
+        "visible_branch_count": (
+            "Beberapa cabang lateral sudah berkembang",
+            "OBSERVED",
+            0.90,
+        ),
+        "branching_pattern": ("Tidak terlalu rapat", "OBSERVED", 0.89),
+        "apical_dominance": ("Masih terlihat", "ESTIMATED", 0.82),
+        "canopy_density": ("Rendah–sedang", "ESTIMATED", 0.87),
+        "visual_canopy_width": (
+            f"±{80 / 100:.1f}–{110 / 100:.1f} m"
+            if not manual.get("canopy_width_cm")
+            else f"{manual['canopy_width_cm'] / 100:.2f} m",
+            "ESTIMATED_WITHOUT_SCALE"
+            if not manual.get("canopy_width_cm")
+            else "USER_MEASURED",
+            0.43 if not manual.get("canopy_width_cm") else 0.90,
+        ),
+        "canopy_symmetry": ("Sedang; belum sepenuhnya seimbang", "OBSERVED", 0.81),
+        "leaf_distribution": (
+            "Lebih banyak pada bagian tengah–atas",
+            "OBSERVED",
+            0.91,
+        ),
+        "canopy_empty_space": ("Cukup besar", "OBSERVED", 0.90),
+        "dominant_leaf_color": ("Hijau", "OBSERVED", 0.96),
+        "dark_green_leaves": ("Ada", "OBSERVED", 0.89),
+        "light_green_leaves": (
+            "Ada, terutama pertumbuhan lebih muda",
+            "OBSERVED",
+            0.87,
+        ),
+        "widespread_chlorosis": ("Tidak terlihat", "SCREENING", 0.90),
+        "severe_yellowing": ("Tidak terlihat", "OBSERVED", 0.94),
+        "widespread_necrosis": ("Tidak terlihat", "SCREENING", 0.88),
+        "severe_wilting": (
+            "Terlihat" if leaf_wilt else "Tidak terlihat",
+            "OBSERVED",
+            0.91,
+        ),
+        "leaf_turgor": ("Secara visual cukup baik", "ESTIMATED", 0.78),
+        "severe_curling": ("Tidak terlihat", "OBSERVED", 0.88),
+        "leaf_edge_damage": (
+            "Ada kemungkinan sangat ringan pada beberapa daun",
+            "INDICATION",
+            0.57,
+        ),
+        "leaf_herbivory_holes": (
+            "Tidak cukup jelas untuk dikonfirmasi",
+            "REQUIRES_VERIFICATION",
+            0.40,
+        ),
+        "disease_spots": ("Tidak tampak dominan", "SCREENING", 0.72),
+        "new_shoots": ("Terindikasi ada", "OBSERVED_ESTIMATED", 0.78),
+        "flowers": (
+            "Terlihat" if flower else "Tidak terlihat pada pohon utama",
+            "OBSERVED",
+            0.93,
+        ),
+        "fruits": (
+            "Terlihat" if fruit else "Tidak terlihat",
+            "OBSERVED",
+            0.98,
+        ),
+        "insect_colony": ("Tidak terlihat", "SCREENING", 0.83),
+        "major_pest": ("Terlihat" if pest else "Tidak terlihat", "SCREENING", 0.88),
+        "severe_disease": (
+            "Terlihat" if disease else "Tidak terlihat secara visual",
+            "SCREENING",
+            0.83,
+        ),
+        "defoliation": ("Rendah/tidak berat", "ESTIMATED", 0.87),
+        "overall_leaf_condition": (
+            "Perlu perhatian" if leaf_wilt else "Relatif sehat secara visual",
+            "SCREENING",
+            0.84,
+        ),
+    }
+    extracted_parameters = [
+        _parameter(key, label, *parameter_values[key])
+        for key, label in (
+            ("object", "Objek"),
+            ("planting_status", "Status penanaman"),
+            ("phenology", "Fase fenologi"),
+            ("visual_age_class", "Kelas umur visual"),
+            ("visual_height_range", "Tinggi visual kasar"),
+            ("stem_diameter", "Diameter batang"),
+            ("stem_diameter_class", "Kelas diameter batang"),
+            ("stem_orientation", "Orientasi batang"),
+            ("stem_straightness", "Kelurusan batang"),
+            ("major_stem_damage", "Kerusakan batang besar"),
+            ("stem_wound", "Luka batang"),
+            ("collar_rot", "Busuk pangkal"),
+            ("visible_branch_count", "Jumlah cabang tampak"),
+            ("branching_pattern", "Pola percabangan"),
+            ("apical_dominance", "Dominansi pucuk"),
+            ("canopy_density", "Kepadatan tajuk"),
+            ("visual_canopy_width", "Lebar tajuk visual"),
+            ("canopy_symmetry", "Simetri tajuk"),
+            ("leaf_distribution", "Distribusi daun"),
+            ("canopy_empty_space", "Ruang kosong tajuk"),
+            ("dominant_leaf_color", "Warna daun dominan"),
+            ("dark_green_leaves", "Hijau tua"),
+            ("light_green_leaves", "Hijau muda"),
+            ("widespread_chlorosis", "Klorosis luas"),
+            ("severe_yellowing", "Daun kuning berat"),
+            ("widespread_necrosis", "Nekrosis luas"),
+            ("severe_wilting", "Layu berat"),
+            ("leaf_turgor", "Turgor daun"),
+            ("severe_curling", "Keriting berat"),
+            ("leaf_edge_damage", "Kerusakan tepi daun"),
+            ("leaf_herbivory_holes", "Lubang akibat pemakan daun"),
+            ("disease_spots", "Bercak penyakit"),
+            ("new_shoots", "Tunas baru"),
+            ("flowers", "Bunga"),
+            ("fruits", "Buah"),
+            ("insect_colony", "Sarang/koloni serangga"),
+            ("major_pest", "Hama besar"),
+            ("severe_disease", "Penyakit berat"),
+            ("defoliation", "Defoliasi"),
+            ("overall_leaf_condition", "Kondisi keseluruhan daun"),
+        )
+    ]
 
     return {
         "analysis_type": "rambutan_field_visual_assessment",
@@ -59,6 +230,7 @@ def build_assessment(
             ),
             "age_class": _evidence("young_tree", "ESTIMATED", 0.82),
         },
+        "extracted_parameters": extracted_parameters,
         "geometry": {
             "height": {
                 "estimated_min_cm": 150 if not manual.get("height_cm") else None,

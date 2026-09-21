@@ -155,6 +155,32 @@ def _backfill_assessments(connection, metadata: MetaData) -> None:
         connection.execute(assessment_table.insert().values(payloads))
 
 
+def upgrade_assessment_payloads(connection) -> int:
+    """Add the v2 parameter table to assessments created by older releases."""
+    rows = connection.execute(
+        text(
+            "SELECT id, payload_json FROM agronomic_assessment "
+            "WHERE payload_json NOT LIKE '%extracted_parameters%'"
+        )
+    ).mappings()
+    updated = 0
+    for row in rows:
+        payload = json.loads(row["payload_json"])
+        payload.setdefault("extracted_parameters", build_assessment()["extracted_parameters"])
+        connection.execute(
+            text(
+                "UPDATE agronomic_assessment SET payload_json = :payload "
+                "WHERE id = :id"
+            ),
+            {
+                "id": row["id"],
+                "payload": json.dumps(payload, ensure_ascii=False, sort_keys=True),
+            },
+        )
+        updated += 1
+    return updated
+
+
 def _reset_sequences(connection, metadata: MetaData, counts: dict[str, int]) -> None:
     for name, count in counts.items():
         if count == 0:

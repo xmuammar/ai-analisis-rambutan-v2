@@ -1,4 +1,5 @@
 from flask import Blueprint, flash, render_template
+import json
 from flask_login import login_required
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -63,6 +64,11 @@ def inspection(tree_id):
                 ),
                 None,
             )
+            assessment_payload = {}
+            if observation.assessment:
+                assessment_payload = json.loads(
+                    observation.assessment.payload_json
+                )
             return render_template(
                 "trees/inspection_result.html",
                 tree=tree,
@@ -75,6 +81,9 @@ def inspection(tree_id):
                 algorithms=auto_payload.get("algorithms", []) if auto_payload else [],
                 pipeline=auto_payload.get("pipeline", {}) if auto_payload else {},
                 advanced_analysis=advanced,
+                extracted_parameters=assessment_payload.get(
+                    "extracted_parameters", []
+                ),
             )
         except SQLAlchemyError:
             db.session.rollback()
