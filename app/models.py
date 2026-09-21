@@ -116,6 +116,12 @@ class AgronomicAssessment(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=utcnow, nullable=False)
     observation = db.relationship("ObservationSession", back_populates="assessment")
 
+    @property
+    def payload(self):
+        import json
+
+        return json.loads(self.payload_json)
+
 
 class SoilObservation(db.Model):
     id = db.Column(db.Integer, primary_key=True)

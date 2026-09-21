@@ -600,6 +600,64 @@ def dashboard():
     )
 
 
+def _report_row(tree):
+    observation = max(
+        tree.observations,
+        key=lambda item: item.observation_datetime,
+        default=None,
+    )
+    assessment = observation.assessment if observation else None
+    return {
+        "tree": tree,
+        "observation": observation,
+        "assessment": assessment,
+        "payload": assessment.payload if assessment else None,
+    }
+
+
+@bp.get("/reports")
+@login_required
+def reports():
+    trees = db.session.scalars(
+        db.select(Tree).where(Tree.active.is_(True)).order_by(Tree.code)
+    ).all()
+    rows = [_report_row(tree) for tree in trees]
+    return render_template("reports/list.html", rows=rows)
+
+
+@bp.get("/reports/<int:tree_id>")
+@login_required
+def tree_report(tree_id):
+    tree = db.get_or_404(Tree, tree_id)
+    row = _report_row(tree)
+    if row["assessment"] is None:
+        return render_template(
+            "reports/detail.html", row=row, payload=None, report_available=False
+        )
+    return render_template(
+        "reports/detail.html",
+        row=row,
+        payload=row["payload"],
+        report_available=True,
+    )
+
+
+@bp.get("/reports/<int:tree_id>.json")
+@login_required
+def tree_report_json(tree_id):
+    tree = db.get_or_404(Tree, tree_id)
+    row = _report_row(tree)
+    if row["payload"] is None:
+        return jsonify(
+            {
+                "status": "INSUFFICIENT_DATA",
+                "tree_id": tree.id,
+                "message": "Belum ada assessment v2 untuk pohon ini.",
+            }
+        ), 404
+    return jsonify(row["payload"])
+
+
 def train_models():
     predictions = db.session.scalars(
         db.select(FieldPrediction).where(

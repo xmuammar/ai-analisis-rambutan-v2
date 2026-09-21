@@ -7,7 +7,8 @@ import pytest
 from PIL import Image
 
 from app import create_app, db
-from app.models import FieldPrediction, ObservationSession, Tree
+from app.models import AgronomicAssessment, FieldPrediction, ObservationSession, Tree
+from app.ai.assessment import build_assessment
 
 
 @pytest.fixture()
@@ -246,6 +247,33 @@ def test_dashboard_renders_analyst_metrics_and_visualizations(client):
     assert b"Putaran pemeriksaan 30 hari" in response.data
     assert b"Status seluruh pohon" in response.data
     assert b"Object detection" in response.data
+
+
+def test_reports_read_v2_assessment_from_database(client):
+    with client.application.app_context():
+        tree = db.session.scalar(db.select(Tree).where(Tree.code == "RBT-001"))
+        observation = ObservationSession(tree_id=tree.id, observer="report-test")
+        db.session.add(observation)
+        db.session.flush()
+        db.session.add(
+            AgronomicAssessment(
+                observation_id=observation.id,
+                analysis_type="rambutan_field_visual_assessment",
+                analysis_version="2.0",
+                overall_status="fair_to_good",
+                payload_json=json.dumps(build_assessment()),
+            )
+        )
+        db.session.commit()
+    response = client.get("/reports")
+    assert response.status_code == 200
+    assert b"Laporan Assessment v2" in response.data
+    response = client.get("/reports/1")
+    assert response.status_code == 200
+    assert b"payload JSON lengkap" in response.data
+    response = client.get("/reports/1.json")
+    assert response.status_code == 200
+    assert response.get_json()["analysis_version"] == "2.0"
 
 
 def test_dashboard_handles_sqlite_naive_observation_timestamp(client, app):
