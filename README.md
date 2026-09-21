@@ -93,6 +93,25 @@ flask --app run.py db stamp head
 flask --app run.py db check
 ```
 
+Repository juga menyediakan ETL terkontrol untuk migrasi ke database PostgreSQL
+kosong. Perintah pertama hanya membaca dan menghitung baris:
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/migrate_sqlite_to_postgres.py \
+  --source sqlite:///instance/ai_analis_rambutan.sqlite3 \
+  --target "$DATABASE_URL"
+```
+
+Setelah backup dan verifikasi staging, jalankan dengan `--apply`. Tool menolak
+target yang tidak kosong, tidak pernah menggabungkan baris, mempertahankan ID
+dan kolom yang tersedia, serta mengatur ulang sequence PostgreSQL:
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/migrate_sqlite_to_postgres.py \
+  --source sqlite:///instance/ai_analis_rambutan.sqlite3 \
+  --target "$DATABASE_URL" --apply
+```
+
 Migrasi produksi tidak menghapus database. Model visual belum tersedia; UI menyatakan
 keterbatasan tersebut dan tidak mengarang prediksi foto.
 
