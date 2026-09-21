@@ -278,6 +278,31 @@ def test_reports_read_v2_assessment_from_database(client):
     assert response.get_json()["analysis_version"] == "2.0"
 
 
+def test_reports_render_legacy_assessment_without_new_governance_fields(client):
+    with client.application.app_context():
+        tree = db.session.scalar(db.select(Tree).where(Tree.code == "RBT-002"))
+        observation = ObservationSession(tree_id=tree.id, observer="legacy-report-test")
+        db.session.add(observation)
+        db.session.flush()
+        payload = build_assessment()
+        payload.pop("analyst_framework")
+        payload.pop("model_governance")
+        db.session.add(
+            AgronomicAssessment(
+                observation_id=observation.id,
+                analysis_type="rambutan_field_visual_assessment",
+                analysis_version="2.0",
+                overall_status="fair_to_good",
+                payload_json=json.dumps(payload),
+            )
+        )
+        db.session.commit()
+    response = client.get("/reports/2")
+    assert response.status_code == 200
+    assert b"EXPERT_ASSIST" in response.data
+    assert b"Tree Architecture" in response.data
+
+
 def test_reports_exports_and_analytics(client):
     assert client.get("/analytics").status_code == 200
     assert client.get("/reports/export.xlsx").status_code == 200
