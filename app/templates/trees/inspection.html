@@ -9,18 +9,24 @@
     <h1>Pemeriksaan {{ tree.code }}</h1>
     <p class="muted">Lengkapi dokumentasi kondisi pohon hari ini. Ambil foto yang mewakili kondisi umum pohon; hasil analisis akan menjadi bahan penilaian awal.</p>
   </div>
-  <div class="inspection-identity"><span>KODE POHON</span><strong>{{ tree.code }}</strong><small>Rambutan Belerang · Inspeksi foto</small></div>
+  <div class="inspection-identity"><span>KODE POHON</span><strong>{{ tree.code }}</strong><small>{{ tree.garden.name }} · Expert-assist v2</small><div class="inspection-live"><i></i> SISTEM SIAP</div></div>
 </div>
 <form method="post" enctype="multipart/form-data" class="card form-card" id="inspection-form" data-analyze-url="{{ url_for('main.analyze_inspection_photo', tree_id=tree.id) }}">
   {{ form.hidden_tag() }}
   <section class="form-section">
     <div class="section-title"><span class="section-number">01</span><div><p class="section-kicker">DOKUMENTASI</p><h2>Ambil foto kondisi pohon</h2></div></div>
     <p class="section-intro">Gunakan foto yang jelas dan mewakili. Ambil beberapa sudut bila diperlukan: pohon penuh, daun, batang, tanah, bunga, atau buah.</p>
-    <p><strong>Metode:</strong> Pemeriksaan berbasis foto</p>
+    <div class="inspection-method-row"><span class="method-chip active">01 · FOTO</span><span class="method-chip">02 · DATA LAPANGAN</span><span class="method-chip">03 · VALIDASI ANALIS</span></div>
+    <p><strong>Metode:</strong> Pemeriksaan berbasis foto dengan orkestrasi AI/ML/DL dan konfirmasi analis.</p>
     {{ form.mode() }}
     {{ form.photos.label }}{{ form.photos(class="input", accept="image/*", capture="environment", multiple=true) }}
     <small class="muted">Kamera belakang atau pilih foto JPG, PNG, WebP. Sistem akan memeriksa kualitas foto sebelum menilai kondisi lapangan.</small>
     <div id="ai-status" class="analysis-panel" aria-live="polite"><strong>Foto belum dipilih.</strong><span>Pilih foto untuk memulai pemeriksaan.</span></div>
+    <div class="inspection-progress" aria-live="polite">
+      <div class="progress-heading"><span><b id="progress-phase">MENUNGGU INPUT</b><small id="progress-detail">Quality gate akan dimulai setelah foto dipilih</small></span><strong id="progress-percent">0%</strong></div>
+      <div class="progress-track"><i id="progress-bar"></i></div>
+      <div class="progress-steps"><span data-progress-step="0">Quality gate</span><span data-progress-step="1">Vision models</span><span data-progress-step="2">Agronomy engine</span><span data-progress-step="3">Evidence & XAI</span></div>
+    </div>
   </section>
   <section class="form-section">
     <div class="section-title"><span class="section-number">02</span><div><p class="section-kicker">PENILAIAN KONDISI</p><h2>Ringkasan analisis lapangan</h2><small class="muted">Hasil analisis pembelajaran mesin digunakan sebagai bahan pendukung pemeriksaan, bukan pengganti pertimbangan analis.</small></div></div>
@@ -29,6 +35,7 @@
       <div><span>Keyakinan gabungan</span><strong id="analysis-confidence">0%</strong></div>
       <div><span>Data perlu konfirmasi</span><strong id="analysis-uncertain">0 data</strong></div>
     </div>
+    <div class="inspection-command-grid"><div><span class="eyebrow">MODEL POSTURE</span><strong>Expert-assist</strong><small>Model membantu screening, analis tetap memutuskan.</small></div><div><span class="eyebrow">EVIDENCE RULE</span><strong>Provenance-first</strong><small>Confidence, sumber, dan status bukti selalu terlihat.</small></div><div><span class="eyebrow">SAFETY GATE</span><strong>Tidak mendiagnosis</strong><small>Hama/penyakit perlu konfirmasi lapangan.</small></div></div>
     <div id="ml-fields" class="ml-field-grid"><p class="empty-inspection">Belum ada foto yang dianalisis.</p></div>
     <div id="model-run-list" class="model-run-list"></div>
     <div id="problem-analysis" class="problem-analysis"><p class="empty-inspection">Penilaian per area kebun akan tampil setelah foto diproses.</p></div>
@@ -223,8 +230,44 @@ const display = (value, key) => {
 };
 function renderProcessingAlgorithms() {
   document.querySelector("#model-run-list").innerHTML = processingAlgorithms.map(([name, detail]) =>
-    `<div class="algorithm-processing"><strong>${name}</strong><span>SEDANG DIJALANKAN</span><small>${detail}</small></div>`
+    `<div class="algorithm-processing"><span class="algorithm-dot"></span><strong>${name}</strong><span class="algorithm-state">QUEUED</span><small>${detail}</small><em><i></i></em></div>`
   ).join("");
+}
+let progressTimer;
+function setProgress(percent, phase, detail, step) {
+  document.querySelector("#progress-bar").style.width = `${percent}%`;
+  document.querySelector("#progress-percent").textContent = `${percent}%`;
+  document.querySelector("#progress-phase").textContent = phase;
+  document.querySelector("#progress-detail").textContent = detail;
+  document.querySelectorAll("[data-progress-step]").forEach((node, index) => {
+    node.classList.toggle("active", index <= step);
+  });
+}
+function animatePipeline() {
+  clearInterval(progressTimer);
+  const phases = [
+    [18, "QUALITY GATE", "Memeriksa resolusi, pencahayaan, dan validitas foto", 0],
+    [42, "VISION MODELS", "Menjalankan object detection, classification, embedding, segmentasi", 1],
+    [68, "AGRONOMY ENGINE", "Menyusun screening daun, tanah, struktur, risiko, dan pertumbuhan", 2],
+    [88, "EVIDENCE & XAI", "Menggabungkan confidence, provenance, model agreement, dan guardrail", 3],
+  ];
+  let index = 0;
+  setProgress(5, "INITIALIZING", "Menyiapkan pipeline AI/ML/DL lokal", 0);
+  progressTimer = setInterval(() => {
+    const phase = phases[index++];
+    if (!phase) return clearInterval(progressTimer);
+    setProgress(...phase);
+    document.querySelectorAll(".algorithm-processing").forEach((node, nodeIndex) => {
+      const state = node.querySelector(".algorithm-state");
+      if (nodeIndex <= index * 10) {
+        state.textContent = "READY";
+        node.classList.add("complete");
+      } else if (nodeIndex <= index * 10 + 8) {
+        state.textContent = "RUNNING";
+        node.classList.add("running");
+      }
+    });
+  }, 420);
 }
 function renderFields(fields) {
   const fieldMap = {root_zone_moisture_class: "soil_moisture_visual"};
@@ -319,6 +362,7 @@ if (photoInput) photoInput.addEventListener("change", async () => {
   if (!photoInput.files.length) return;
   statusBox.innerHTML = "<strong>AI sedang menganalisis...</strong><span>Menjalankan seluruh algoritma pemeriksaan:</span>";
   renderProcessingAlgorithms();
+  animatePipeline();
   const payload = new FormData();
   for (const file of photoInput.files) payload.append("photos", file);
   payload.append("csrf_token", form.querySelector("[name=csrf_token]").value);
