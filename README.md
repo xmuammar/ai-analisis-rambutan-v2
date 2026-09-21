@@ -34,7 +34,9 @@ flask --app run.py run --debug
 ```
 
 Buka `http://127.0.0.1:5000`, buat akun, lalu buka salah satu dari 12 pohon awal.
-Untuk production PostgreSQL, set `DATABASE_URL` ke URL `postgresql+psycopg://...`.
+Untuk production PostgreSQL, set `DATABASE_URL` ke URL
+`postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE`. Driver `psycopg[binary]`
+sudah ada di `requirements.txt`; jangan memasukkan password ke repository.
 
 ## Migrasi dan tes
 
@@ -45,12 +47,50 @@ flask --app run.py db upgrade
 pytest
 ```
 
-Startup membuat schema/seed secara aman untuk development ketika `AUTO_CREATE_SCHEMA=1`.
-Untuk production, set `AUTO_CREATE_SCHEMA=0`, jalankan migrasi, lalu seed data secara eksplisit:
+Startup hanya membuat schema otomatis untuk SQLite development. Untuk PostgreSQL,
+`AUTO_CREATE_SCHEMA` otomatis bernilai `0`; jalankan migrasi dan seed secara eksplisit:
 
 ```bash
 flask --app run.py db upgrade
 flask --app run.py seed-data
+```
+
+### Migrasi PostgreSQL versi 2
+
+Gunakan database kosong atau salinan database staging terlebih dahulu. Pastikan user
+PostgreSQL memiliki hak `CONNECT`, `CREATE` pada database, dan `USAGE, CREATE` pada
+schema target. Contoh:
+
+```bash
+createdb ai_analis_rambutan
+export DATABASE_URL='postgresql+psycopg://app_user:password@localhost:5432/ai_analis_rambutan'
+export AUTO_CREATE_SCHEMA=0
+flask --app run.py db current
+flask --app run.py db upgrade
+flask --app run.py seed-data
+flask --app run.py db check
+```
+
+Migration `b2c3d4e5f6a7_add_v2_agronomic_assessment.py` menambahkan tabel
+`agronomic_assessment`. Payload JSON versi `2.0` menyimpan hasil assessment
+konservatif lengkap, provenance, confidence, kebutuhan konfirmasi, risiko,
+pengukuran lanjutan, dan batasan diagnosis. Migration tidak menghapus data lama.
+
+Sebelum cutover produksi:
+
+1. Backup database sumber dan uji restore.
+2. Jalankan `flask db upgrade` pada staging PostgreSQL.
+3. Verifikasi jumlah baris pada tabel longitudinal dan `agronomic_assessment`.
+4. Jalankan smoke test login, inspeksi foto, backup JSON, dan seed.
+5. Hentikan penulisan ke sumber saat migrasi data, lalu verifikasi ulang checksum dan jumlah baris.
+
+Untuk memindahkan data SQLite lama, gunakan dump terkontrol (ETL atau `pgloader`),
+bukan menyalin file `.sqlite3` ke server PostgreSQL. Setelah data dipindahkan,
+set marker Alembic sesuai histori sumber hanya jika seluruh migration sudah diterapkan:
+
+```bash
+flask --app run.py db stamp head
+flask --app run.py db check
 ```
 
 Migrasi produksi tidak menghapus database. Model visual belum tersedia; UI menyatakan
