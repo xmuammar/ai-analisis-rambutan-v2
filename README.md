@@ -71,6 +71,14 @@ flask --app run.py seed-data
 flask --app run.py db check
 ```
 
+Jika role aplikasi belum memiliki hak schema, administrator dapat menjalankan
+`scripts/grant_postgres_app_privileges.sql` pada database target:
+
+```bash
+psql -h 127.0.0.1 -U postgres -d ai_rambutan \
+  -f scripts/grant_postgres_app_privileges.sql
+```
+
 Migration `b2c3d4e5f6a7_add_v2_agronomic_assessment.py` menambahkan tabel
 `agronomic_assessment`. Payload JSON versi `2.0` menyimpan hasil assessment
 konservatif lengkap, provenance, confidence, kebutuhan konfirmasi, risiko,
