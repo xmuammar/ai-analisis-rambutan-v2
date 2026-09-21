@@ -24,3 +24,13 @@ def test_v2_contains_all_granular_visual_parameters():
     assert len(architecture) == 16
     assert architecture[0]["parameter"] == "Batang utama"
     assert architecture[0]["value"] == "Masih dominan dan mudah dikenali"
+    soil = assessment["soil_parameters"]
+    assert len(soil) == 23
+    assert soil[0]["parameter"] == "Permukaan tanah"
+    assert soil[0]["interpretation"] == "Terlihat jelas di permukaan"
+    assert any(
+        item["parameter"] == "pH"
+        and item["evidence_status"] == "REQUIRES_MEASUREMENT"
+        and item["confidence"] is None
+        for item in soil
+    )

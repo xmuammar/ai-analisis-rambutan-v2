@@ -65,6 +65,53 @@ def _architecture_parameters() -> list[dict]:
     ]
 
 
+def _soil_parameters() -> list[dict]:
+    values = (
+        ("soil_surface", "Permukaan tanah", "Kering", "Terlihat jelas di permukaan", "OBSERVED", 0.94),
+        ("soil_surface_color", "Warna permukaan", "Cokelat keabu-abuan", "Teramati", "OBSERVED", 0.88),
+        ("exposed_soil_near_trunk", "Tanah terbuka", "Tinggi di zona dekat batang", "Teramati", "OBSERVED", 0.90),
+        ("mulch", "Mulsa", "Tidak terlihat", "Teramati", "OBSERVED", 0.96),
+        ("grass_at_collar", "Rumput tepat di pangkal", "Rendah", "Positif untuk mengurangi kompetisi", "OBSERVED", 0.92),
+        ("distant_weeds", "Gulma lebih jauh", "Ada", "Kompetisi tetap ada di zona luar", "OBSERVED", 0.89),
+        ("surface_structure", "Struktur permukaan", "Tampak menggumpal/keras di beberapa bagian", "Indikasi", "VISUAL_INDICATION", 0.58),
+        ("heavy_cracks", "Retakan berat", "Tidak dominan", "Teramati", "OBSERVED", 0.84),
+        ("standing_water", "Genangan", "Tidak terlihat", "Teramati", "OBSERVED", 0.88),
+        ("collar_depression", "Cekungan sekitar pangkal", "Ada bentuk permukaan tidak rata/depresi", "Teramati", "OBSERVED", 0.76),
+        ("subsurface_drainage", "Drainase bawah tanah", "Tidak dapat ditentukan", "Perlu verifikasi", "REQUIRES_VERIFICATION", None),
+        ("moisture_5_10_cm", "Kelembapan 5–10 cm", "Tidak dapat ditentukan dari RGB", "Perlu pemeriksaan tangan/sensor", "REQUIRES_MEASUREMENT", None),
+        ("root_zone_moisture", "Kelembapan zona akar", "Tidak dapat ditentukan", "Perlu verifikasi", "REQUIRES_VERIFICATION", None),
+        ("root_depth", "Kedalaman akar", "Tidak diketahui", "Tidak terlihat", "NOT_VISIBLE", None),
+        ("root_condition", "Kondisi akar", "Tidak dapat dievaluasi", "Di bawah tanah", "NOT_VISIBLE", None),
+        ("root_rot", "Root rot", "Tidak boleh disimpulkan", "Tidak ada data", "INSUFFICIENT_DATA", None),
+        ("soil_ph", "pH", "Tidak diketahui", "Perlu alat", "REQUIRES_MEASUREMENT", None),
+        ("soil_nitrogen", "N", "Tidak diketahui", "Perlu analisis", "REQUIRES_ANALYSIS", None),
+        ("soil_phosphorus", "P", "Tidak diketahui", "Perlu analisis", "REQUIRES_ANALYSIS", None),
+        ("soil_potassium", "K", "Tidak diketahui", "Perlu analisis", "REQUIRES_ANALYSIS", None),
+        ("soil_organic_carbon", "C-organik", "Tidak diketahui", "Perlu analisis", "REQUIRES_ANALYSIS", None),
+        ("soil_ec_salinity", "EC/salinitas", "Tidak diketahui", "Perlu alat", "REQUIRES_MEASUREMENT", None),
+        ("soil_zone_overall", "Kondisi zona tanah keseluruhan", "Permukaan perlu perhatian; kondisi bawah permukaan belum diketahui", "Interpretasi konservatif", "SCREENING", 0.78),
+    )
+    return [
+        _parameter_with_interpretation(
+            key, label, value, interpretation, evidence, confidence
+        )
+        for key, label, value, interpretation, evidence, confidence in values
+    ]
+
+
+def _parameter_with_interpretation(
+    key: str,
+    label: str,
+    value: Any,
+    interpretation: str,
+    evidence: str,
+    confidence: float | None,
+) -> dict:
+    result = _parameter(key, label, value, evidence, confidence)
+    result["interpretation"] = interpretation
+    return result
+
+
 def build_assessment(
     fields: dict | None = None,
     *,
@@ -241,6 +288,7 @@ def build_assessment(
         )
     ]
     architecture_parameters = _architecture_parameters()
+    soil_parameters = _soil_parameters()
 
     return {
         "analysis_type": "rambutan_field_visual_assessment",
@@ -258,6 +306,7 @@ def build_assessment(
         },
         "extracted_parameters": extracted_parameters,
         "architecture_parameters": architecture_parameters,
+        "soil_parameters": soil_parameters,
         "geometry": {
             "height": {
                 "estimated_min_cm": 150 if not manual.get("height_cm") else None,
