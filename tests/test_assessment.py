@@ -20,3 +20,7 @@ def test_v2_contains_all_granular_visual_parameters():
         for item in parameters
     )
     assert assessment["quality_control"]["diagnosis_from_single_image"] is False
+    architecture = assessment["architecture_parameters"]
+    assert len(architecture) == 16
+    assert architecture[0]["parameter"] == "Batang utama"
+    assert architecture[0]["value"] == "Masih dominan dan mudah dikenali"

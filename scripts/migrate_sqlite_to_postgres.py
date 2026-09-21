@@ -160,13 +160,16 @@ def upgrade_assessment_payloads(connection) -> int:
     rows = connection.execute(
         text(
             "SELECT id, payload_json FROM agronomic_assessment "
-            "WHERE payload_json NOT LIKE '%extracted_parameters%'"
+            "WHERE payload_json NOT LIKE '%extracted_parameters%' "
+            "OR payload_json NOT LIKE '%architecture_parameters%'"
         )
     ).mappings()
     updated = 0
     for row in rows:
         payload = json.loads(row["payload_json"])
-        payload.setdefault("extracted_parameters", build_assessment()["extracted_parameters"])
+        template = build_assessment()
+        payload.setdefault("extracted_parameters", template["extracted_parameters"])
+        payload.setdefault("architecture_parameters", template["architecture_parameters"])
         connection.execute(
             text(
                 "UPDATE agronomic_assessment SET payload_json = :payload "

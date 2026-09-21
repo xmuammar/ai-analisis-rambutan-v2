@@ -84,6 +84,9 @@ def inspection(tree_id):
                 extracted_parameters=assessment_payload.get(
                     "extracted_parameters", []
                 ),
+                architecture_parameters=assessment_payload.get(
+                    "architecture_parameters", []
+                ),
             )
         except SQLAlchemyError:
             db.session.rollback()

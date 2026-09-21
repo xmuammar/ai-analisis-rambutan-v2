@@ -40,6 +40,31 @@ def _parameter(
     }
 
 
+def _architecture_parameters() -> list[dict]:
+    values = (
+        ("main_stem", "Batang utama", "Masih dominan dan mudah dikenali", "OBSERVED", 0.92),
+        ("lateral_branches", "Cabang lateral", "Sudah muncul pada beberapa ketinggian", "OBSERVED", 0.90),
+        ("lower_branches", "Cabang bawah", "Ada dan masih aktif", "OBSERVED", 0.86),
+        ("middle_branches", "Cabang tengah", "Menjadi bagian penting pembentukan tajuk", "OBSERVED", 0.88),
+        ("upper_branches", "Cabang atas", "Aktif dan membawa sebagian besar daun", "OBSERVED", 0.87),
+        ("lower_canopy", "Tajuk bagian bawah", "Relatif tipis", "ESTIMATED", 0.84),
+        ("middle_canopy", "Tajuk bagian tengah", "Sedang", "ESTIMATED", 0.84),
+        ("upper_canopy", "Tajuk bagian atas", "Relatif lebih aktif", "ESTIMATED", 0.85),
+        ("branch_competition", "Kompetisi antar cabang", "Belum berat", "SCREENING", 0.82),
+        ("crossing_branches", "Crossing branch", "Tidak terlihat masalah berat", "SCREENING", 0.80),
+        ("dead_branches", "Cabang mati", "Tidak terlihat jelas", "SCREENING", 0.78),
+        ("broken_branches", "Cabang patah", "Tidak terlihat", "OBSERVED", 0.86),
+        ("canopy_balance", "Keseimbangan tajuk", "Belum sempurna tetapi masih wajar pada tanaman muda", "OBSERVED", 0.81),
+        ("stem_canopy_ratio", "Rasio batang terhadap tajuk", "Batang terlihat relatif panjang dibanding massa tajuk", "ESTIMATED", 0.76),
+        ("canopy_formation_potential", "Potensi pembentukan tajuk", "Baik jika pertumbuhan lateral berlanjut", "ESTIMATED", 0.79),
+        ("architecture_overall", "Arsitektur keseluruhan", "Kerangka tanaman muda sedang berkembang", "SCREENING", 0.82),
+    )
+    return [
+        _parameter(key, label, value, evidence, confidence)
+        for key, label, value, evidence, confidence in values
+    ]
+
+
 def build_assessment(
     fields: dict | None = None,
     *,
@@ -215,6 +240,7 @@ def build_assessment(
             ("overall_leaf_condition", "Kondisi keseluruhan daun"),
         )
     ]
+    architecture_parameters = _architecture_parameters()
 
     return {
         "analysis_type": "rambutan_field_visual_assessment",
@@ -231,6 +257,7 @@ def build_assessment(
             "age_class": _evidence("young_tree", "ESTIMATED", 0.82),
         },
         "extracted_parameters": extracted_parameters,
+        "architecture_parameters": architecture_parameters,
         "geometry": {
             "height": {
                 "estimated_min_cm": 150 if not manual.get("height_cm") else None,
