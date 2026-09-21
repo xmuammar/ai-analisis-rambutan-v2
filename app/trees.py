@@ -95,6 +95,7 @@ def inspection(tree_id):
                 pest_disease_screening=assessment_payload.get(
                     "pest_disease_screening", {}
                 ),
+                agronomic_risks=assessment_payload.get("agronomic_risks", []),
             )
         except SQLAlchemyError:
             db.session.rollback()

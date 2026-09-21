@@ -170,6 +170,34 @@ def _pest_disease_screening() -> dict:
     }
 
 
+def _agronomic_risks() -> list[dict]:
+    values = (
+        ("surface_drying", "Kekeringan permukaan", "Sedang", "Permukaan tanah tampak kering", "SCREENING", 0.88),
+        ("root_water_shortage", "Kekurangan air akar", "Tidak diketahui", "Tidak dapat dinilai dari foto", "REQUIRES_VERIFICATION", None),
+        ("waterlogging", "Genangan", "Rendah saat foto", "Tidak terlihat air menggenang", "OBSERVED", 0.88),
+        ("weed_pressure", "Gulma", "Rendah–sedang", "Ada vegetasi di zona luar", "SCREENING", 0.86),
+        ("wind_stem_instability", "Batang terguncang angin", "Sedang", "Batang masih ramping", "ESTIMATED", 0.74),
+        ("stem_breakage", "Patah batang", "Rendah–sedang", "Tergantung angin, belum dapat diverifikasi", "REQUIRES_VERIFICATION", 0.55),
+        ("leaf_disease", "Penyakit daun", "Rendah berdasarkan foto", "Tidak ada gejala berat", "SCREENING", 0.83),
+        ("leaf_pest", "Hama daun", "Rendah berdasarkan foto", "Tidak ada kerusakan besar", "SCREENING", 0.84),
+        ("heat_stress", "Stres panas", "Potensial", "Matahari langsung + tanah terbuka", "INTERPRETATION", 0.76),
+        ("light_competition", "Kompetisi cahaya", "Rendah", "Pohon memperoleh cahaya baik", "ESTIMATED", 0.86),
+        ("surrounding_plant_competition", "Kompetisi tanaman sekitar", "Sedang di zona luar", "Gulma dan tanaman lain tersedia", "SCREENING", 0.78),
+        ("wet_collar_risk", "Risiko collar terlalu basah", "Perlu dipantau", "Bentuk tanah sekitar pangkal tidak rata", "SCREENING", 0.64),
+    )
+    return [
+        {
+            "key": key,
+            "risk": label,
+            "level": level,
+            "basis": basis,
+            "evidence_status": evidence,
+            "confidence": confidence,
+        }
+        for key, label, level, basis, evidence, confidence in values
+    ]
+
+
 def _parameter_with_interpretation(
     key: str,
     label: str,
@@ -363,6 +391,7 @@ def build_assessment(
     weed_parameters = _weed_parameters()
     microclimate_parameters = _microclimate_parameters()
     pest_disease_screening = _pest_disease_screening()
+    agronomic_risks = _agronomic_risks()
 
     return {
         "analysis_type": "rambutan_field_visual_assessment",
@@ -384,6 +413,7 @@ def build_assessment(
         "weed_parameters": weed_parameters,
         "microclimate_parameters": microclimate_parameters,
         "pest_disease_screening": pest_disease_screening,
+        "agronomic_risks": agronomic_risks,
         "geometry": {
             "height": {
                 "estimated_min_cm": 150 if not manual.get("height_cm") else None,

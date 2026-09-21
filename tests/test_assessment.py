@@ -54,3 +54,14 @@ def test_v2_contains_all_granular_visual_parameters():
     assert screening["disease_screening"] == "Tidak ditemukan gejala berat"
     assert screening["diagnosis"] is None
     assert screening["confirmation_required"] is True
+    risks = assessment["agronomic_risks"]
+    assert len(risks) == 12
+    assert risks[0]["risk"] == "Kekeringan permukaan"
+    assert risks[0]["level"] == "Sedang"
+    assert risks[0]["basis"] == "Permukaan tanah tampak kering"
+    assert any(
+        item["risk"] == "Kekurangan air akar"
+        and item["level"] == "Tidak diketahui"
+        and item["confidence"] is None
+        for item in risks
+    )
