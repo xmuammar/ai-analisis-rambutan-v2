@@ -14,16 +14,16 @@
     <a class="brand" href="{{ url_for('main.dashboard') }}"><span class="brand-mark">AR</span><span>AI - Analis Rambutan</span><small>AGRITEC / V2</small></a>
     {% if current_user.is_authenticated %}
     <nav class="primary-nav">
-      <span class="nav-group-label">WORKSPACE</span>
-      <a href="{{ url_for('main.dashboard') }}">⌂ <span>Command center</span></a>
+      <span class="nav-group-label">RUANG KERJA</span>
+      <a href="{{ url_for('main.dashboard') }}">⌂ <span>Pusat kendali</span></a>
       <a href="{{ url_for('trees.list_trees') }}">♧ <span>Pohon & petak</span></a>
       <a href="{{ url_for('main.analytics') }}">◈ <span>Analitik</span></a>
-      <span class="nav-group-label">EVIDENCE</span>
+      <span class="nav-group-label">BUKTI ANALISIS</span>
       <a href="{{ url_for('main.reports') }}">▤ <span>Laporan</span></a>
-      <a href="{{ url_for('main.ai_lab') }}">◉ <span>AI / ML / DL Lab</span></a>
+      <a href="{{ url_for('main.ai_lab') }}">◉ <span>Laboratorium AI / ML / DL</span></a>
       <a href="{{ url_for('main.about') }}">? <span>Metodologi</span></a>
       <span class="nav-group-label">DATA</span>
-      <a href="{{ url_for('main.backup') }}">⇩ <span>Backup JSON</span></a>
+      <a href="{{ url_for('main.backup') }}">⇩ <span>Cadangan JSON</span></a>
       <form method="post" action="{{ url_for('auth.logout') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-button">Keluar</button></form>
     </nav>
     {% endif %}

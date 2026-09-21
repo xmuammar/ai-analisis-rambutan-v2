@@ -72,9 +72,9 @@ def test_about_page_lists_algorithm_groups(client):
     assert b"Isolation Forest" in response.data
     assert b"LSTM / GRU" in response.data
     assert b"SHAP, LIME, Grad-CAM, dan Heatmap" in response.data
-    assert b"Katalog runtime algoritma terpasang" in response.data
+    assert b"Katalog perangkat lunak algoritma terpasang" in response.data
     assert b"Isolation Forest" in response.data
-    assert b"INSUFFICIENT_DATA" in response.data
+    assert b"DATA BELUM CUKUP" in response.data
 
 
 def test_developer_center_is_removed_from_user_interface(client):
@@ -202,11 +202,11 @@ def test_saved_inspection_renders_ml_driven_form(client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"Form hasil machine learning" in response.data
+    assert b"Hasil pembelajaran mesin" in response.data
     assert b"DOMINAN_HIJAU" in response.data
     assert b"NEEDS_CONFIRMATION" in response.data
-    assert b"DECISION WORKSPACE" in response.data
-    assert b"FIELD ACTION QUEUE" in response.data
+    assert b"RUANG KEPUTUSAN" in response.data
+    assert b"DAFTAR TINDAKAN LAPANGAN" in response.data
 
 
 def test_inspection_form_renders_database_sections(client, app):
@@ -230,7 +230,7 @@ def test_inspection_form_renders_database_sections(client, app):
     assert b"tidak perlu input manual" in response.data
     assert b"YOLO11 Nano" in response.data
     assert b"DeepLabV3 Segmentation" in response.data
-    assert b"MODEL POSTURE" in response.data
+    assert b"POSISI MODEL" in response.data
     assert b"progress-phase" in response.data
     assert b"animatePipeline" in response.data
     assert b"problem-analysis" in response.data
@@ -251,9 +251,9 @@ def test_dashboard_renders_analyst_metrics_and_visualizations(client):
     assert b"Dashboard Analitik Kebun" in response.data
     assert b"Putaran pemeriksaan 30 hari" in response.data
     assert b"Status seluruh pohon" in response.data
-    assert b"Object detection" in response.data
+    assert b"Deteksi objek" in response.data
     assert b"Kesiapan keputusan lapangan" in response.data
-    assert b"pohon punya assessment" in response.data
+    assert b"pohon memiliki penilaian" in response.data
 
 
 def test_reports_read_v2_assessment_from_database(client):
@@ -274,7 +274,7 @@ def test_reports_read_v2_assessment_from_database(client):
         db.session.commit()
     response = client.get("/reports")
     assert response.status_code == 200
-    assert b"Laporan Assessment v2" in response.data
+    assert b"Laporan Penilaian v2" in response.data
     response = client.get("/reports/1")
     assert response.status_code == 200
     assert b"payload JSON lengkap" in response.data
@@ -304,7 +304,7 @@ def test_reports_render_legacy_assessment_without_new_governance_fields(client):
         db.session.commit()
     response = client.get("/reports/2")
     assert response.status_code == 200
-    assert b"EXPERT_ASSIST" in response.data
+    assert b"MODE BANTUAN PAKAR" in response.data
     assert b"Tree Architecture" in response.data
 
 
@@ -325,10 +325,10 @@ def test_reports_exports_and_analytics(client):
 def test_ai_lab_exposes_professional_model_governance(client):
     response = client.get("/ai-lab")
     assert response.status_code == 200
-    assert b"AI / ML / DL Lab" in response.data
-    assert b"Evidence coverage" in response.data
-    assert b"Human-in-the-loop" in response.data
-    assert b"VALIDATION GATE" in response.data
+    assert b"Laboratorium AI / ML / DL" in response.data
+    assert b"Cakupan bukti" in response.data
+    assert b"Kendali manusia" in response.data
+    assert b"GERBANG VALIDASI" in response.data
 
 
 def test_analytics_api_returns_machine_readable_metrics(client):

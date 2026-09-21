@@ -25,11 +25,11 @@
 {% endfor %}
 
 <section class="card about-group">
-  <h2>Katalog runtime algoritma terpasang</h2>
-  <p class="muted">Status runtime menunjukkan library tersedia. Status model menunjukkan apakah algoritma langsung dapat dipakai atau masih memerlukan model terlatih, dataset, histori, dan kalibrasi.</p>
+  <h2>Katalog perangkat lunak algoritma terpasang</h2>
+  <p class="muted">Status perangkat menunjukkan pustaka tersedia. Status model menunjukkan apakah algoritma dapat dipakai langsung atau masih memerlukan model terlatih, dataset, histori, dan kalibrasi.</p>
   <div class="algorithm-table-wrap">
     <table class="data-table">
-      <thead><tr><th>Algoritma</th><th>Tugas</th><th>Runtime</th><th>Runtime</th><th>Syarat</th><th>Status model</th></tr></thead>
+      <thead><tr><th>Algoritma</th><th>Tugas</th><th>Perangkat</th><th>Status perangkat</th><th>Syarat</th><th>Status model</th></tr></thead>
       <tbody>
       {% for item in algorithm_catalog %}
       <tr><td>{{ item.name }}</td><td>{{ item.task }}</td><td>{{ item.runtime }}</td><td>{{ item.runtime_status }}</td><td>{{ item.requirement }}</td><td>{{ item.model_status }}</td></tr>
@@ -41,7 +41,7 @@
 
 <section class="card about-flow">
   <h2>Alur saat foto dianalisis</h2>
-  <p>Foto → Quality Gate → Feature Engineering → Vision Models → Screening pertanian → Ensemble → XAI → Form otomatis → Konfirmasi pengguna.</p>
-  <p class="muted">Jika data historis, label, depth/reference marker, atau model pertanian khusus belum cukup, sistem mengembalikan status <strong>INSUFFICIENT_DATA</strong> dan tidak mengarang hasil.</p>
+  <p>Foto → Gerbang kualitas → Rekayasa fitur → Model visual → Penyaringan pertanian → Penggabungan model → Penjelasan model → Form otomatis → Konfirmasi pengguna.</p>
+  <p class="muted">Jika data historis, label, penanda skala, atau model pertanian khusus belum cukup, sistem menandai <strong>DATA BELUM CUKUP</strong> dan tidak mengarang hasil.</p>
 </section>
 {% endblock %}

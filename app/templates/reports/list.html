@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Laporan Assessment v2 · AI - Analis Rambutan{% endblock %}
+{% block title %}Laporan Penilaian v2 · AI - Analis Rambutan{% endblock %}
 {% block content %}
 <section class="hero page-heading">
-  <div><p class="eyebrow">LAPORAN AGRONOMI</p><h1>Laporan Assessment v2</h1><p class="muted">Baca payload analisis visual rambutan lengkap dari PostgreSQL tanpa mengubah status bukti atau confidence.</p></div>
-  <a class="button secondary" href="{{ url_for('main.backup') }}">Unduh Backup JSON</a>
+  <div><p class="eyebrow">LAPORAN AGRONOMI</p><h1>Laporan Penilaian v2</h1><p class="muted">Baca hasil analisis visual rambutan dari PostgreSQL tanpa mengubah status bukti atau tingkat keyakinan.</p></div>
+  <a class="button secondary" href="{{ url_for('main.backup') }}">Unduh Cadangan JSON</a>
 </section>
 <section class="card table-card">
-  <div class="section-heading"><div><h2>Assessment terbaru per pohon</h2><p class="muted">Laporan hanya menampilkan data yang sudah tersimpan.</p></div><div class="report-actions"><a class="button secondary" href="{{ url_for('main.reports_pdf') }}">PDF</a><a class="button secondary" href="{{ url_for('main.reports_excel') }}">Excel</a><span class="pill">{{ rows|length }} pohon</span></div></div>
+  <div class="section-heading"><div><h2>Penilaian terbaru per pohon</h2><p class="muted">Laporan hanya menampilkan data yang sudah tersimpan.</p></div><div class="report-actions"><a class="button secondary" href="{{ url_for('main.reports_pdf') }}">PDF</a><a class="button secondary" href="{{ url_for('main.reports_excel') }}">Excel</a><span class="pill">{{ rows|length }} pohon</span></div></div>
   <div class="table-wrap"><table><thead><tr><th>Pohon</th><th>Versi</th><th>Status visual</th><th>Observasi terakhir</th><th></th></tr></thead><tbody>
   {% for row in rows %}<tr><td><strong>{{ row.tree.code }}</strong><small>{{ row.tree.variety }}</small></td><td>{% if row.assessment %}{{ row.assessment.analysis_version }}{% else %}—{% endif %}</td><td>{% if row.assessment %}{{ row.assessment.overall_status|replace('_',' ')|title }}{% else %}<span class="muted">Belum tersedia</span>{% endif %}</td><td>{% if row.observation %}{{ row.observation.observation_datetime.strftime('%d %b %Y · %H:%M') }}{% else %}—{% endif %}</td><td><a href="{{ url_for('main.tree_report', tree_id=row.tree.id) }}">Buka laporan →</a></td></tr>{% else %}<tr><td colspan="5">Belum ada pohon aktif.</td></tr>{% endfor %}
   </tbody></table></div>

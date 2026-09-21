@@ -9,7 +9,7 @@
     <h1>Pemeriksaan {{ tree.code }}</h1>
     <p class="muted">Lengkapi dokumentasi kondisi pohon hari ini. Ambil foto yang mewakili kondisi umum pohon; hasil analisis akan menjadi bahan penilaian awal.</p>
   </div>
-  <div class="inspection-identity"><span>KODE POHON</span><strong>{{ tree.code }}</strong><small>{{ tree.garden.name }} · Expert-assist v2</small><div class="inspection-live"><i></i> SISTEM SIAP</div></div>
+  <div class="inspection-identity"><span>KODE POHON</span><strong>{{ tree.code }}</strong><small>{{ tree.garden.name }} · Bantuan pakar v2</small><div class="inspection-live"><i></i> SISTEM SIAP</div></div>
 </div>
 <form method="post" enctype="multipart/form-data" class="card form-card" id="inspection-form" data-analyze-url="{{ url_for('main.analyze_inspection_photo', tree_id=tree.id) }}">
   {{ form.hidden_tag() }}
@@ -23,9 +23,9 @@
     <small class="muted">Kamera belakang atau pilih foto JPG, PNG, WebP. Sistem akan memeriksa kualitas foto sebelum menilai kondisi lapangan.</small>
     <div id="ai-status" class="analysis-panel" aria-live="polite"><strong>Foto belum dipilih.</strong><span>Pilih foto untuk memulai pemeriksaan.</span></div>
     <div class="inspection-progress" aria-live="polite">
-      <div class="progress-heading"><span><b id="progress-phase">MENUNGGU INPUT</b><small id="progress-detail">Quality gate akan dimulai setelah foto dipilih</small></span><strong id="progress-percent">0%</strong></div>
+      <div class="progress-heading"><span><b id="progress-phase">MENUNGGU INPUT</b><small id="progress-detail">Gerbang kualitas dimulai setelah foto dipilih</small></span><strong id="progress-percent">0%</strong></div>
       <div class="progress-track"><i id="progress-bar"></i></div>
-      <div class="progress-steps"><span data-progress-step="0">Quality gate</span><span data-progress-step="1">Vision models</span><span data-progress-step="2">Agronomy engine</span><span data-progress-step="3">Evidence & XAI</span></div>
+      <div class="progress-steps"><span data-progress-step="0">Gerbang kualitas</span><span data-progress-step="1">Model visual</span><span data-progress-step="2">Mesin agronomi</span><span data-progress-step="3">Bukti & penjelasan</span></div>
     </div>
   </section>
   <section class="form-section">
@@ -35,7 +35,7 @@
       <div><span>Keyakinan gabungan</span><strong id="analysis-confidence">0%</strong></div>
       <div><span>Data perlu konfirmasi</span><strong id="analysis-uncertain">0 data</strong></div>
     </div>
-    <div class="inspection-command-grid"><div><span class="eyebrow">MODEL POSTURE</span><strong>Expert-assist</strong><small>Model membantu screening, analis tetap memutuskan.</small></div><div><span class="eyebrow">EVIDENCE RULE</span><strong>Provenance-first</strong><small>Confidence, sumber, dan status bukti selalu terlihat.</small></div><div><span class="eyebrow">SAFETY GATE</span><strong>Tidak mendiagnosis</strong><small>Hama/penyakit perlu konfirmasi lapangan.</small></div></div>
+    <div class="inspection-command-grid"><div><span class="eyebrow">POSISI MODEL</span><strong>Bantuan pakar</strong><small>Model membantu penyaringan, analis tetap memutuskan.</small></div><div><span class="eyebrow">ATURAN BUKTI</span><strong>Asal bukti utama</strong><small>Tingkat keyakinan, sumber, dan status bukti selalu terlihat.</small></div><div><span class="eyebrow">GERBANG KESELAMATAN</span><strong>Tidak mendiagnosis</strong><small>Hama dan penyakit perlu konfirmasi lapangan.</small></div></div>
     <div id="ml-fields" class="ml-field-grid"><p class="empty-inspection">Belum ada foto yang dianalisis.</p></div>
     <div id="model-run-list" class="model-run-list"></div>
     <div id="problem-analysis" class="problem-analysis"><p class="empty-inspection">Penilaian per area kebun akan tampil setelah foto diproses.</p></div>
@@ -152,7 +152,11 @@ const statusLabels = {
   DERIVED: "HASIL TURUNAN",
   READY: "SIAP",
   INSUFFICIENT_DATA: "DATA BELUM CUKUP",
-  NEEDS_MODEL: "MODEL BELUM TERSEDIA"
+  NEEDS_MODEL: "MODEL BELUM TERSEDIA",
+  QUEUED: "DALAM ANTREAN",
+  RUNNING: "SEDANG BERJALAN",
+  COMPLETE: "SELESAI",
+  READY: "SIAP"
 };
 const sourceLabels = {
   "yolo11n": "Deteksi objek YOLO11 Nano",
@@ -163,9 +167,9 @@ const sourceLabels = {
   "NO_AGRICULTURE_SPECIFIC_MODEL": "Model pertanian khusus belum tersedia",
   "NO_SOIL_SPECIFIC_MODEL": "Model tanah khusus belum tersedia",
   "VISUAL_ANOMALY_SCREENING": "Penyaringan anomali visual umum",
-  "HYBRID_AGRICULTURE_SCREENING": "Screening hama, penyakit, dan gulma",
-  "HYBRID_FLOWER_FRUIT_SCREENING": "Screening bunga dan buah",
-  "SOIL_LEAF_VISUAL_ENSEMBLE": "Ensemble visual tanah dan daun"
+  "HYBRID_AGRICULTURE_SCREENING": "Penyaringan hama, penyakit, dan gulma",
+  "HYBRID_FLOWER_FRUIT_SCREENING": "Penyaringan bunga dan buah",
+  "SOIL_LEAF_VISUAL_ENSEMBLE": "Penggabungan visual tanah dan daun"
 };
 const algorithmLabels = {
   "Quality Gate": "Pemeriksaan kualitas foto",
@@ -215,7 +219,7 @@ const processingAlgorithms = [
   ["Weighted Ensemble", "Menggabungkan keluaran model lokal"],
   ["SHAP / LIME / Grad-CAM / Heatmap", "Menjelaskan fitur dan area yang memengaruhi hasil"],
   ["Risk / Growth Prediction", "Menghitung risiko dan arah pertumbuhan dengan guard data"],
-  ["Confidence Calibration / Model Agreement", "Menyesuaikan keyakinan berdasarkan kesepakatan model"],
+  ["Kalibrasi keyakinan / kesepakatan model", "Menyesuaikan keyakinan berdasarkan kesepakatan model"],
   ["Out-of-Distribution Detection", "Menandai data yang berbeda dari pola pelatihan"],
   ["Anomaly Detection", "Membandingkan dengan baseline historis per pohon"],
   ["Agricultural Classifier", "Memerlukan dataset pertanian berlabel sebelum diagnosis"]
@@ -230,7 +234,7 @@ const display = (value, key) => {
 };
 function renderProcessingAlgorithms() {
   document.querySelector("#model-run-list").innerHTML = processingAlgorithms.map(([name, detail]) =>
-    `<div class="algorithm-processing"><span class="algorithm-dot"></span><strong>${name}</strong><span class="algorithm-state">QUEUED</span><small>${detail}</small><em><i></i></em></div>`
+    `<div class="algorithm-processing"><span class="algorithm-dot"></span><strong>${name}</strong><span class="algorithm-state">DALAM ANTREAN</span><small>${detail}</small><em><i></i></em></div>`
   ).join("");
 }
 let progressTimer;
@@ -246,13 +250,13 @@ function setProgress(percent, phase, detail, step) {
 function animatePipeline() {
   clearInterval(progressTimer);
   const phases = [
-    [18, "QUALITY GATE", "Memeriksa resolusi, pencahayaan, dan validitas foto", 0],
-    [42, "VISION MODELS", "Menjalankan object detection, classification, embedding, segmentasi", 1],
-    [68, "AGRONOMY ENGINE", "Menyusun screening daun, tanah, struktur, risiko, dan pertumbuhan", 2],
-    [88, "EVIDENCE & XAI", "Menggabungkan confidence, provenance, model agreement, dan guardrail", 3],
+    [18, "GERBANG KUALITAS", "Memeriksa resolusi, pencahayaan, dan validitas foto", 0],
+    [42, "MODEL VISUAL", "Menjalankan deteksi objek, klasifikasi, embedding, dan segmentasi", 1],
+    [68, "MESIN AGRONOMI", "Menyusun penyaringan daun, tanah, struktur, risiko, dan pertumbuhan", 2],
+    [88, "BUKTI & PENJELASAN", "Menggabungkan tingkat keyakinan, asal bukti, kesepakatan model, dan pagar pengaman", 3],
   ];
   let index = 0;
-  setProgress(5, "INITIALIZING", "Menyiapkan pipeline AI/ML/DL lokal", 0);
+  setProgress(5, "MEMULAI", "Menyiapkan alur AI/ML/DL lokal", 0);
   progressTimer = setInterval(() => {
     const phase = phases[index++];
     if (!phase) return clearInterval(progressTimer);
@@ -260,10 +264,10 @@ function animatePipeline() {
     document.querySelectorAll(".algorithm-processing").forEach((node, nodeIndex) => {
       const state = node.querySelector(".algorithm-state");
       if (nodeIndex <= index * 10) {
-        state.textContent = "READY";
+        state.textContent = "SIAP";
         node.classList.add("complete");
       } else if (nodeIndex <= index * 10 + 8) {
-        state.textContent = "RUNNING";
+        state.textContent = "BERJALAN";
         node.classList.add("running");
       }
     });
@@ -321,7 +325,7 @@ function renderFields(fields) {
     <article class="ml-field">
       <div class="ml-field-heading"><strong>${fieldLabels[key] || key.replaceAll("_", " ")}</strong><span class="status-chip ${String(field.status).toLowerCase()}">${statusLabels[field.status] || field.status}</span></div>
       <div class="ml-value">${display(field.value, key)}</div>
-      <small>Keyakinan ${Math.round((field.confidence || 0) * 100)}% · ${sourceLabels[field.source] || field.source || "Sumber belum diketahui"}</small>
+      <small>Tingkat keyakinan ${Math.round((field.confidence || 0) * 100)}% · ${sourceLabels[field.source] || field.source || "Sumber belum diketahui"}</small>
       ${field.status === "NEEDS_CONFIRMATION" ? `<input class="input ml-confirmation" data-field="${key}" placeholder="Masukkan konfirmasi analis">` : ""}
     </article>`).join("") : "<p class=\"muted\">Hasil AI sudah mengisi form database di bawah. Tidak ada kolom hasil yang berulang.</p>";
   for (const section of document.querySelectorAll("[data-after-analysis]")) {
@@ -343,7 +347,7 @@ function renderAnalystSummary(data) {
     stem_branch: "Batang dan cabang",
     flower_fruit: "Bunga dan buah",
     pest_disease_weed: "Hama, penyakit, dan gulma",
-    virtual_soil: "Virtual soil sensor",
+    virtual_soil: "Sensor tanah virtual",
     historical_anomaly: "Baseline historis dan anomali"
   };
   const problemBox = document.querySelector("#problem-analysis");
@@ -351,7 +355,7 @@ function renderAnalystSummary(data) {
     problemBox.innerHTML = "<p class=\"muted\">Orkestrasi analisis belum tersedia.</p>";
     return;
   }
-  problemBox.innerHTML = `<div class="problem-analysis-heading"><strong>Orkestrasi analisis pertanian</strong><span>${problem.ready_algorithm_count}/${problem.algorithm_count} algoritma siap · confidence ${Math.round(problem.confidence * 100)}%</span></div><div class="problem-analysis-grid">${Object.entries(problem.components).map(([key, item]) => `<article class="problem-card"><div class="ml-field-heading"><strong>${problemLabels[key] || key}</strong><span class="status-chip ${String(item.status).toLowerCase()}">${statusLabels[item.status] || item.status}</span></div><strong>${item.algorithm}</strong><small>Confidence ${Math.round(item.confidence * 100)}% · ${item.source}</small><ul>${(item.evidence || []).map(reason => `<li>${reason}</li>`).join("")}</ul></article>`).join("")}</div>`;
+  problemBox.innerHTML = `<div class="problem-analysis-heading"><strong>Orkestrasi analisis pertanian</strong><span>${problem.ready_algorithm_count}/${problem.algorithm_count} algoritma siap · tingkat keyakinan ${Math.round(problem.confidence * 100)}%</span></div><div class="problem-analysis-grid">${Object.entries(problem.components).map(([key, item]) => `<article class="problem-card"><div class="ml-field-heading"><strong>${problemLabels[key] || key}</strong><span class="status-chip ${String(item.status).toLowerCase()}">${statusLabels[item.status] || item.status}</span></div><strong>${item.algorithm}</strong><small>Tingkat keyakinan ${Math.round(item.confidence * 100)}% · ${item.source}</small><ul>${(item.evidence || []).map(reason => `<li>${reason}</li>`).join("")}</ul></article>`).join("")}</div>`;
 }
 form.addEventListener("submit", () => {
   form.querySelectorAll("[data-ai-locked='true']").forEach((field) => {
