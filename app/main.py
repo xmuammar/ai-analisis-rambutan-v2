@@ -630,6 +630,7 @@ def _analytics_data(rows):
     risk_levels = Counter()
     status_counts = Counter()
     evidence_counts = Counter()
+    measurement_flags = Counter()
     for row in assessed:
         payload = row["payload"]
         status = payload.get("agronomic_assessment", {}).get(
@@ -641,6 +642,8 @@ def _analytics_data(rows):
             if confidence is not None:
                 confidence_values.append(float(confidence))
             evidence_counts[item.get("evidence_status", "UNKNOWN")] += 1
+            if item.get("confidence") is None or float(item.get("confidence") or 0) < 0.60:
+                measurement_flags["needs_review"] += 1
         for item in payload.get("agronomic_risks", []):
             risk_levels[item.get("level", "unknown")] += 1
     return {
@@ -655,6 +658,27 @@ def _analytics_data(rows):
         "status_counts": dict(status_counts),
         "risk_levels": dict(risk_levels),
         "evidence_counts": dict(evidence_counts),
+        "evidence_coverage": (
+            sum(
+                count
+                for evidence, count in evidence_counts.items()
+                if evidence in {"OBSERVED", "MEASURED", "USER_MEASURED"}
+            )
+            / sum(evidence_counts.values())
+            if evidence_counts
+            else 0.0
+        ),
+        "review_flag_count": measurement_flags["needs_review"],
+        "analyst_dimensions": [
+            ("Fenologi", "fase, bunga, buah, tunas"),
+            ("Geometri", "tinggi, lebar tajuk, diameter batang"),
+            ("Arsitektur", "dominansi, cabang, simetri, ruang tajuk"),
+            ("Daun dan vigor", "warna, turgor, klorosis, nekrosis"),
+            ("Tanah dan akar", "permukaan, air, pH, N-P-K, EC"),
+            ("Biotik", "hama, penyakit, gulma, kompetisi"),
+            ("Mikroklimat", "cahaya, suhu, RH, angin"),
+            ("Risiko dan tindakan", "prioritas, bukti, verifikasi"),
+        ],
         "priority_rows": [
             {
                 "code": row["tree"].code,
@@ -688,6 +712,21 @@ def analytics():
         "reports/analytics.html",
         rows=rows,
         analytics=_analytics_data(rows),
+    )
+
+
+@bp.get("/ai-lab")
+@login_required
+def ai_lab():
+    rows = _report_rows()
+    metadata_count = db.session.scalar(
+        db.select(db.func.count(ModelMetadata.id))
+    ) or 0
+    return render_template(
+        "ai_lab.html",
+        algorithm_catalog=get_algorithm_catalog(),
+        analytics=_analytics_data(rows),
+        model_metadata_count=metadata_count,
     )
 
 

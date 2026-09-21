@@ -70,3 +70,5 @@ def test_v2_contains_all_granular_visual_parameters():
     assert indices[0]["index"] == "Vitalitas daun"
     assert indices[0]["status"] == "Baik"
     assert indices[-1]["status"] == "Cukup baik–baik"
+    assert assessment["analyst_framework"]["methodology"] == "evidence_first_expert_assist"
+    assert assessment["model_governance"]["human_confirmation_required"] is True

@@ -425,6 +425,40 @@ def build_assessment(
     return {
         "analysis_type": "rambutan_field_visual_assessment",
         "analysis_version": ANALYSIS_VERSION,
+        "analyst_framework": {
+            "methodology": "evidence_first_expert_assist",
+            "dimensions": [
+                "phenology",
+                "geometry",
+                "tree_architecture",
+                "leaf_vigor",
+                "soil_root_zone",
+                "pest_disease_weed",
+                "microclimate",
+                "risk_and_intervention",
+            ],
+            "decision_layers": [
+                "observation",
+                "screening",
+                "risk_prioritization",
+                "field_confirmation",
+            ],
+            "new_variables": [
+                "evidence_coverage",
+                "measurement_readiness",
+                "model_agreement",
+                "out_of_distribution_flag",
+                "intervention_urgency",
+            ],
+        },
+        "model_governance": {
+            "mode": "EXPERT_ASSIST",
+            "diagnosis_allowed": False,
+            "measurement_without_scale_allowed": False,
+            "human_confirmation_required": True,
+            "explainability_required": True,
+            "provenance_required": True,
+        },
         "subject": {
             "object": "rambutan_tree",
             "tree_id": manual.get("tree_id"),

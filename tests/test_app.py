@@ -282,6 +282,14 @@ def test_reports_exports_and_analytics(client):
     assert client.get("/reports/export.pdf").status_code == 200
 
 
+def test_ai_lab_exposes_professional_model_governance(client):
+    response = client.get("/ai-lab")
+    assert response.status_code == 200
+    assert b"AI / ML / DL Lab" in response.data
+    assert b"Evidence coverage" in response.data
+    assert b"Human-in-the-loop" in response.data
+
+
 def test_dashboard_handles_sqlite_naive_observation_timestamp(client, app):
     with app.app_context():
         tree = db.session.scalar(db.select(Tree).where(Tree.code == "RBT-001"))

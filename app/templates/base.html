@@ -11,15 +11,19 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="{{ url_for('main.dashboard') }}">AI - Analis Rambutan</a>
+    <a class="brand" href="{{ url_for('main.dashboard') }}"><span class="brand-mark">AR</span><span>AI - Analis Rambutan</span><small>AGRITEC / V2</small></a>
     {% if current_user.is_authenticated %}
-    <nav>
-      <a href="{{ url_for('main.dashboard') }}">Beranda</a>
-      <a href="{{ url_for('trees.list_trees') }}">Pohon Saya</a>
-      <a href="{{ url_for('main.reports') }}">Laporan</a>
-      <a href="{{ url_for('main.analytics') }}">Analitik</a>
-      <a href="{{ url_for('main.about') }}">Panduan Analisis</a>
-      <a href="{{ url_for('main.backup') }}">Backup JSON</a>
+    <nav class="primary-nav">
+      <span class="nav-group-label">WORKSPACE</span>
+      <a href="{{ url_for('main.dashboard') }}">⌂ <span>Command center</span></a>
+      <a href="{{ url_for('trees.list_trees') }}">♧ <span>Pohon & petak</span></a>
+      <a href="{{ url_for('main.analytics') }}">◈ <span>Analitik</span></a>
+      <span class="nav-group-label">EVIDENCE</span>
+      <a href="{{ url_for('main.reports') }}">▤ <span>Laporan</span></a>
+      <a href="{{ url_for('main.ai_lab') }}">◉ <span>AI / ML / DL Lab</span></a>
+      <a href="{{ url_for('main.about') }}">? <span>Metodologi</span></a>
+      <span class="nav-group-label">DATA</span>
+      <a href="{{ url_for('main.backup') }}">⇩ <span>Backup JSON</span></a>
       <form method="post" action="{{ url_for('auth.logout') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-button">Keluar</button></form>
     </nav>
     {% endif %}
