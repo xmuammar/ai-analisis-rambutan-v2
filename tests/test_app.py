@@ -205,6 +205,8 @@ def test_saved_inspection_renders_ml_driven_form(client, app):
     assert b"Form hasil machine learning" in response.data
     assert b"DOMINAN_HIJAU" in response.data
     assert b"NEEDS_CONFIRMATION" in response.data
+    assert b"DECISION WORKSPACE" in response.data
+    assert b"FIELD ACTION QUEUE" in response.data
 
 
 def test_inspection_form_renders_database_sections(client, app):

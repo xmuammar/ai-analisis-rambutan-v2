@@ -52,6 +52,13 @@ def inspection(tree_id):
                 )
             except json.JSONDecodeError:
                 auto_payload = None
+            ml_fields = build_ml_form_fields(auto_payload)
+            prediction_ids = {
+                prediction.field_key: prediction.id
+                for prediction in observation.predictions
+            }
+            for field in ml_fields:
+                field["prediction_id"] = prediction_ids.get(field["key"])
             flash(
                 "Pemeriksaan tersimpan. Hasil model visual dan data yang perlu dikonfirmasi telah dicatat.",
                 "success",
@@ -77,7 +84,7 @@ def inspection(tree_id):
                 confidence_label=confidence_label(inference.confidence),
                 level=level,
                 reasons=reasons,
-                ml_fields=build_ml_form_fields(auto_payload),
+                ml_fields=ml_fields,
                 algorithms=auto_payload.get("algorithms", []) if auto_payload else [],
                 pipeline=auto_payload.get("pipeline", {}) if auto_payload else {},
                 advanced_analysis=advanced,
@@ -99,6 +106,8 @@ def inspection(tree_id):
                 plant_status_indices=assessment_payload.get(
                     "plant_status_indices", []
                 ),
+                analyst_framework=assessment_payload.get("analyst_framework", {}),
+                model_governance=assessment_payload.get("model_governance", {}),
             )
         except SQLAlchemyError:
             db.session.rollback()

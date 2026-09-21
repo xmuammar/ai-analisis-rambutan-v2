@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Hasil pemeriksaan · AI - Analis Rambutan{% endblock %}
 {% block content %}
-<p class="eyebrow">HASIL PEMERIKSAAN · {{ tree.code }}</p><h1>Data tersimpan</h1>
+<a class="back" href="{{ url_for('trees.detail', tree_id=tree.id) }}">← Kembali ke profil pohon</a>
+<div class="inspection-result-hero"><div><p class="eyebrow">DECISION WORKSPACE · {{ tree.code }}</p><h1>Data tersimpan · Hasil pemeriksaan</h1><p class="muted">Satu halaman untuk membaca temuan AI, kualitas bukti, risiko, dan tindakan konfirmasi analis.</p></div><div class="result-command"><span>MODEL POSTURE</span><strong>{{ model_governance.get("mode", "EXPERT_ASSIST") }}</strong><small>{{ pipeline.get("ready_model_count", 0) }}/{{ pipeline.get("model_count", 0) }} model siap</small></div></div>
+<section class="result-kpi-grid"><div><span>Status rule engine</span><strong>{{ level|replace('_',' ')|title }}</strong></div><div><span>Confidence gabungan</span><strong>{{ "%.0f"|format(inference.confidence * 100) }}%</strong></div><div><span>Konfirmasi diperlukan</span><strong>{{ ml_fields|selectattr("status","equalto","NEEDS_CONFIRMATION")|list|length }}</strong></div><div><span>Policy</span><strong>HUMAN-IN-LOOP</strong></div></section>
 <section class="card result"><div class="result-badge">{{ level|replace('_',' ')|title }}</div><h2>Form hasil machine learning</h2><p>Pipeline menjalankan {{ pipeline.get("ready_model_count", 0) }}/{{ pipeline.get("model_count", 0) }} model. Nilai dengan status <strong>NEEDS_CONFIRMATION</strong> harus diperiksa manusia.</p>
 <div class="ml-field-grid">{% for field in ml_fields %}<article class="ml-field"><div class="ml-field-heading"><strong>{{ field.label }}</strong><span class="status-chip {{ field.status|lower }}">{{ field.status }}</span></div><div class="ml-value">{{ field.value }}</div><small>Confidence {{ "%.0f"|format(field.confidence * 100) }}% · {{ field.source }}</small>{% if field.status == "NEEDS_CONFIRMATION" %}<label class="confirm-label">Koreksi / konfirmasi<input class="input correction-value" data-field="{{ field.key }}" value="{{ field.value }}"></label><button class="button confirm-button" data-field="{{ field.key }}">Simpan koreksi</button>{% endif %}</article>{% endfor %}</div>
+{% if agronomic_risks %}<section class="result-action-panel"><div><p class="eyebrow">FIELD ACTION QUEUE</p><h2>Prioritas verifikasi lapangan</h2><p class="muted">Urutkan tindakan berdasarkan risiko dan keterbatasan bukti, bukan satu skor kesehatan.</p></div><div class="action-queue">{% for item in agronomic_risks[:5] %}<div><span class="priority-label tinggi">{{ item.level }}</span><strong>{{ item.risk }}</strong><small>{{ item.basis }}</small><em>{{ "Ukur / konfirmasi" if item.confidence is none or item.confidence < 0.8 else "Pantau pada inspeksi berikutnya" }}</em></div>{% endfor %}</div></section>{% endif %}
 {% if extracted_parameters %}<h3>Ekstraksi parameter agronomi v2</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Hasil ekstraksi</th><th>Status bukti</th><th>Confidence</th></tr></thead><tbody>{% for item in extracted_parameters %}<tr><td>{{ item.parameter }}</td><td>{{ item.value }}</td><td><span class="status-chip {{ item.evidence_status|lower }}">{{ item.evidence_status }}</span></td><td>{% if item.confidence is not none %}{{ "%.0f"|format(item.confidence * 100) }}%{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
 {% if architecture_parameters %}<h3>Analisis arsitektur pohon</h3><div class="table-wrap"><table><thead><tr><th>Parameter arsitektur</th><th>Analisis</th><th>Status bukti</th><th>Confidence</th></tr></thead><tbody>{% for item in architecture_parameters %}<tr><td>{{ item.parameter }}</td><td>{{ item.value }}</td><td><span class="status-chip {{ item.evidence_status|lower }}">{{ item.evidence_status }}</span></td><td>{% if item.confidence is not none %}{{ "%.0f"|format(item.confidence * 100) }}%{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
 {% if soil_parameters %}<h3>Analisis tanah dan zona akar</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Kondisi visual</th><th>Interpretasi</th><th>Status bukti</th><th>Confidence</th></tr></thead><tbody>{% for item in soil_parameters %}<tr><td>{{ item.parameter }}</td><td>{{ item.value }}</td><td>{{ item.interpretation }}</td><td><span class="status-chip {{ item.evidence_status|lower }}">{{ item.evidence_status }}</span></td><td>{% if item.confidence is not none %}{{ "%.0f"|format(item.confidence * 100) }}%{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
@@ -18,9 +21,26 @@
 <script>
 for (const button of document.querySelectorAll(".confirm-button")) {
   button.addEventListener("click", async () => {
+    const card = button.closest(".ml-field");
+    const input = card.querySelector(".correction-value");
+    const fieldKey = button.dataset.field;
+    const fieldPrediction = {{ ml_fields|tojson }};
+    const selected = fieldPrediction.find((item) => item.key === fieldKey);
+    if (!selected || !selected.prediction_id || !input.value.trim()) return;
     button.disabled = true;
-    button.textContent = "Tersimpan sebagai draft koreksi";
-    button.closest(".ml-field").classList.add("confirmed");
+    button.textContent = "Menyimpan...";
+    const response = await fetch(`/api/predictions/${selected.prediction_id}/correction`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "X-CSRFToken": document.querySelector("[name=csrf_token]")?.value || ""},
+      body: JSON.stringify({user_final_value: input.value.trim()})
+    });
+    if (!response.ok) {
+      button.disabled = false;
+      button.textContent = "Coba lagi";
+      return;
+    }
+    button.textContent = "Koreksi tersimpan";
+    card.classList.add("confirmed");
   });
 }
 </script>
