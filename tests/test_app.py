@@ -247,6 +247,8 @@ def test_dashboard_renders_analyst_metrics_and_visualizations(client):
     assert b"Putaran pemeriksaan 30 hari" in response.data
     assert b"Status seluruh pohon" in response.data
     assert b"Object detection" in response.data
+    assert b"Kesiapan keputusan lapangan" in response.data
+    assert b"pohon punya assessment" in response.data
 
 
 def test_reports_read_v2_assessment_from_database(client):
@@ -288,6 +290,16 @@ def test_ai_lab_exposes_professional_model_governance(client):
     assert b"AI / ML / DL Lab" in response.data
     assert b"Evidence coverage" in response.data
     assert b"Human-in-the-loop" in response.data
+    assert b"VALIDATION GATE" in response.data
+
+
+def test_analytics_api_returns_machine_readable_metrics(client):
+    response = client.get("/api/analytics")
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["analysis_version"] == "2.0"
+    assert payload["policy"] == "expert_assist"
+    assert "evidence_coverage" in payload["metrics"]
 
 
 def test_dashboard_handles_sqlite_naive_observation_timestamp(client, app):

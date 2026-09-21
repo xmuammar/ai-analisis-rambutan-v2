@@ -531,6 +531,9 @@ def dashboard():
     daily_counts = Counter()
     status_counts = Counter()
     priority_rows = []
+    assessment_count = 0
+    review_count = 0
+    stale_count = 0
     for tree in trees:
         ordered = sorted(
             tree.observations,
@@ -545,6 +548,18 @@ def dashboard():
             else 0.0
         )
         uncertain = sum(item.confidence < 0.45 for item in predictions)
+        assessment = latest.assessment if latest else None
+        payload = assessment.payload if assessment else None
+        if payload:
+            assessment_count += 1
+            if payload.get("quality_control", {}).get("user_confirmation_required", True):
+                review_count += 1
+        if latest:
+            latest_time = latest.observation_datetime
+            if latest_time.tzinfo is None:
+                latest_time = latest_time.replace(tzinfo=timezone.utc)
+            if latest_time < now - timedelta(days=30):
+                stale_count += 1
         status = tree.status or "BELUM DIANALISIS"
         status_counts[status] += 1
         if latest_confidence:
@@ -561,9 +576,29 @@ def dashboard():
             "latest": latest,
             "confidence": latest_confidence,
             "uncertain": uncertain,
+            "assessment": assessment,
+            "payload": payload,
+            "review_required": bool(
+                payload
+                and payload.get("quality_control", {}).get(
+                    "user_confirmation_required", True
+                )
+            ),
+            "next_action": (
+                "Konfirmasi lapangan dan ukur tanah 5–20 cm"
+                if payload
+                and payload.get("quality_control", {}).get(
+                    "user_confirmation_required", True
+                )
+                else "Jadwalkan pemeriksaan foto berikutnya"
+            ),
             "priority": (
                 "TINGGI"
-                if uncertain or status in {"PERLU_TINDAKAN", "KRITIS"}
+                if uncertain
+                or status in {"PERLU_TINDAKAN", "KRITIS"}
+                or (payload and payload.get("quality_control", {}).get(
+                    "user_confirmation_required", False
+                ))
                 else "NORMAL"
             ),
         }
@@ -588,6 +623,10 @@ def dashboard():
         "overall_confidence": overall_confidence,
         "priority_count": len(priority_rows),
         "max_chart": max_chart,
+        "assessment_count": assessment_count,
+        "review_count": review_count,
+        "stale_count": stale_count,
+        "coverage": assessment_count / len(trees) if trees else 0.0,
     }
     return render_template(
         "dashboard.html",
@@ -712,6 +751,19 @@ def analytics():
         "reports/analytics.html",
         rows=rows,
         analytics=_analytics_data(rows),
+    )
+
+
+@bp.get("/api/analytics")
+@login_required
+def analytics_api():
+    return jsonify(
+        {
+            "analysis_version": "2.0",
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "policy": "expert_assist",
+            "metrics": _analytics_data(_report_rows()),
+        }
     )
 
 
