@@ -163,3 +163,17 @@ migrasi satu kali tanpa menghapus data:
 flask --app run.py db stamp head
 flask --app run.py db check
 ```
+## Laporan dan analitik profesional
+
+Menu **Laporan** membaca assessment v2 terbaru dari PostgreSQL dan menyediakan
+ringkasan per pohon, tabel parameter lengkap, screening konservatif, risiko,
+quality control, serta payload JSON asli. Laporan dapat diunduh sebagai:
+
+- **Excel** (`/reports/export.xlsx`) untuk analisis lanjutan dan penyaringan data.
+- **PDF** (`/reports/export.pdf`) untuk arsip dan distribusi lapangan.
+
+Menu **Analitik** (`/analytics`) menampilkan cakupan assessment, rata-rata
+confidence parameter (bukan skor kesehatan), distribusi status visual, level
+risiko, dan daftar prioritas verifikasi. Grafik digunakan sebagai alat bantu
+keputusan; analis tetap perlu mengonfirmasi kondisi tanah, ukuran pohon, hama,
+dan penyakit melalui pemeriksaan lapangan.

@@ -17,6 +17,7 @@
       <a href="{{ url_for('main.dashboard') }}">Beranda</a>
       <a href="{{ url_for('trees.list_trees') }}">Pohon Saya</a>
       <a href="{{ url_for('main.reports') }}">Laporan</a>
+      <a href="{{ url_for('main.analytics') }}">Analitik</a>
       <a href="{{ url_for('main.about') }}">Panduan Analisis</a>
       <a href="{{ url_for('main.backup') }}">Backup JSON</a>
       <form method="post" action="{{ url_for('auth.logout') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="link-button">Keluar</button></form>

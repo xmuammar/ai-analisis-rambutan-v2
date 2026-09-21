@@ -2,6 +2,7 @@ import hashlib
 import json
 from collections import Counter
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 from pathlib import Path
 
 from flask import (
@@ -11,6 +12,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_file,
     url_for,
 )
 from flask_login import current_user, login_required
@@ -615,14 +617,78 @@ def _report_row(tree):
     }
 
 
-@bp.get("/reports")
-@login_required
-def reports():
+def _report_rows():
     trees = db.session.scalars(
         db.select(Tree).where(Tree.active.is_(True)).order_by(Tree.code)
     ).all()
-    rows = [_report_row(tree) for tree in trees]
+    return [_report_row(tree) for tree in trees]
+
+
+def _analytics_data(rows):
+    assessed = [row for row in rows if row["payload"]]
+    confidence_values = []
+    risk_levels = Counter()
+    status_counts = Counter()
+    evidence_counts = Counter()
+    for row in assessed:
+        payload = row["payload"]
+        status = payload.get("agronomic_assessment", {}).get(
+            "overall_visual_status", "unknown"
+        )
+        status_counts[status] += 1
+        for item in payload.get("extracted_parameters", []):
+            confidence = item.get("confidence")
+            if confidence is not None:
+                confidence_values.append(float(confidence))
+            evidence_counts[item.get("evidence_status", "UNKNOWN")] += 1
+        for item in payload.get("agronomic_risks", []):
+            risk_levels[item.get("level", "unknown")] += 1
+    return {
+        "tree_count": len(rows),
+        "assessed_count": len(assessed),
+        "unassessed_count": len(rows) - len(assessed),
+        "average_confidence": (
+            sum(confidence_values) / len(confidence_values)
+            if confidence_values
+            else 0.0
+        ),
+        "status_counts": dict(status_counts),
+        "risk_levels": dict(risk_levels),
+        "evidence_counts": dict(evidence_counts),
+        "priority_rows": [
+            {
+                "code": row["tree"].code,
+                "status": row["payload"]
+                .get("agronomic_assessment", {})
+                .get("overall_visual_status", "unknown"),
+                "risks": [
+                    item
+                    for item in row["payload"].get("agronomic_risks", [])
+                    if item.get("level", "").lower()
+                    in {"tinggi", "high", "sedang", "medium", "potential"}
+                ][:5],
+            }
+            for row in assessed
+        ],
+    }
+
+
+@bp.get("/reports")
+@login_required
+def reports():
+    rows = _report_rows()
     return render_template("reports/list.html", rows=rows)
+
+
+@bp.get("/analytics")
+@login_required
+def analytics():
+    rows = _report_rows()
+    return render_template(
+        "reports/analytics.html",
+        rows=rows,
+        analytics=_analytics_data(rows),
+    )
 
 
 @bp.get("/reports/<int:tree_id>")
@@ -656,6 +722,165 @@ def tree_report_json(tree_id):
             }
         ), 404
     return jsonify(row["payload"])
+
+
+def _export_rows(tree_id=None):
+    if tree_id is not None:
+        tree = db.get_or_404(Tree, tree_id)
+        rows = [_report_row(tree)]
+    else:
+        rows = _report_rows()
+    return [row for row in rows if row["payload"]]
+
+
+@bp.get("/reports/export.xlsx")
+@login_required
+def reports_excel():
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill
+
+    rows = _export_rows()
+    workbook = Workbook()
+    summary = workbook.active
+    summary.title = "Ringkasan"
+    summary.append(["Kode pohon", "Varietas", "Tanggal observasi", "Status visual", "Versi"])
+    for cell in summary[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor="23613B")
+    for row in rows:
+        payload = row["payload"]
+        summary.append(
+            [
+                row["tree"].code,
+                row["tree"].variety,
+                row["observation"].observation_datetime.isoformat()
+                if row["observation"]
+                else "",
+                payload.get("agronomic_assessment", {}).get(
+                    "overall_visual_status", "unknown"
+                ),
+                payload.get("analysis_version", ""),
+            ]
+        )
+    details = workbook.create_sheet("Parameter")
+    details.append(["Kode pohon", "Kelompok", "Parameter", "Nilai", "Bukti", "Confidence"])
+    for cell in details[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor="23613B")
+    for row in rows:
+        for group in (
+            "extracted_parameters",
+            "architecture_parameters",
+            "soil_parameters",
+            "weed_parameters",
+            "microclimate_parameters",
+            "agronomic_risks",
+            "plant_status_indices",
+        ):
+            for item in row["payload"].get(group, []):
+                details.append(
+                    [
+                        row["tree"].code,
+                        group,
+                        item.get("parameter", item.get("risk", item.get("index", ""))),
+                        item.get("value", item.get("status", item.get("level", ""))),
+                        item.get("evidence_status", ""),
+                        item.get("confidence"),
+                    ]
+                )
+    for sheet in workbook.worksheets:
+        sheet.freeze_panes = "A2"
+        for column in sheet.columns:
+            sheet.column_dimensions[column[0].column_letter].width = min(
+                max(len(str(cell.value or "")) for cell in column) + 2, 42
+            )
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="laporan-assessment-rambutan.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+@bp.get("/reports/export.pdf")
+@login_required
+def reports_pdf():
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    rows = _export_rows()
+    output = BytesIO()
+    document = SimpleDocTemplate(
+        output,
+        pagesize=landscape(A4),
+        rightMargin=12 * mm,
+        leftMargin=12 * mm,
+        topMargin=12 * mm,
+        bottomMargin=12 * mm,
+    )
+    styles = getSampleStyleSheet()
+    story = [
+        Paragraph("Laporan Assessment Agronomi Rambutan v2", styles["Title"]),
+        Paragraph(
+            "Laporan konservatif berbasis observasi visual; bukan diagnosis dan bukan pengganti pengukuran lapangan.",
+            styles["Normal"],
+        ),
+        Spacer(1, 8 * mm),
+    ]
+    data = [["Pohon", "Observasi", "Status visual", "Confidence", "Risiko utama"]]
+    for row in rows:
+        payload = row["payload"]
+        risks = payload.get("agronomic_risks", [])
+        risk_text = ", ".join(
+            str(item.get("risk", "")) for item in risks[:3]
+        ) or "Tidak ada"
+        confidences = [
+            item.get("confidence")
+            for item in payload.get("extracted_parameters", [])
+            if item.get("confidence") is not None
+        ]
+        data.append(
+            [
+                row["tree"].code,
+                row["observation"].observation_datetime.strftime("%Y-%m-%d")
+                if row["observation"]
+                else "-",
+                payload.get("agronomic_assessment", {}).get(
+                    "overall_visual_status", "unknown"
+                ),
+                f"{sum(confidences) / len(confidences):.0%}" if confidences else "-",
+                Paragraph(risk_text, styles["BodyText"]),
+            ]
+        )
+    table = Table(data, repeatRows=1, colWidths=[28 * mm, 30 * mm, 42 * mm, 25 * mm, 130 * mm])
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#23613B")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#DCE7DF")),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F5F8F5")]),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+    story.append(table)
+    document.build(story)
+    output.seek(0)
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="laporan-assessment-rambutan.pdf",
+        mimetype="application/pdf",
+    )
 
 
 def train_models():

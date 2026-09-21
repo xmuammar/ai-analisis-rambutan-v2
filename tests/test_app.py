@@ -276,6 +276,12 @@ def test_reports_read_v2_assessment_from_database(client):
     assert response.get_json()["analysis_version"] == "2.0"
 
 
+def test_reports_exports_and_analytics(client):
+    assert client.get("/analytics").status_code == 200
+    assert client.get("/reports/export.xlsx").status_code == 200
+    assert client.get("/reports/export.pdf").status_code == 200
+
+
 def test_dashboard_handles_sqlite_naive_observation_timestamp(client, app):
     with app.app_context():
         tree = db.session.scalar(db.select(Tree).where(Tree.code == "RBT-001"))
