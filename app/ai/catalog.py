@@ -14,24 +14,24 @@ _ALGORITHMS = (
     ("Naive Bayes", "Klasifikasi", "sklearn", "Data fitur"),
     ("Linear Regression", "Regresi", "sklearn", "Target numerik"),
     ("Isolation Forest", "Anomali", "sklearn", "Baseline historis"),
-    ("K-Means / DBSCAN", "Clustering", "sklearn", "Data fitur"),
+    ("K-Means / DBSCAN", "Pengelompokan pola", "sklearn", "Data fitur"),
     ("PCA", "Reduksi dimensi", "sklearn", "Data fitur"),
-    ("ARIMA-style / EWMA", "Time-series", "python", "Histori temporal"),
-    ("LSTM / GRU", "Deep time-series", "torch", "Histori panjang"),
-    ("YOLO / RT-DETR", "Object detection", "ultralytics", "Model vision"),
+    ("ARIMA-style / EWMA", "Deret waktu", "python", "Histori temporal"),
+    ("LSTM / GRU", "Deret waktu mendalam", "torch", "Histori panjang"),
+    ("YOLO / RT-DETR", "Deteksi objek", "ultralytics", "Model visual"),
     (
         "MobileNet / EfficientNet / ConvNeXt",
-        "Image classification",
+        "Klasifikasi gambar",
         "torchvision",
         "Model vision",
     ),
-    ("DINO / DINOv2", "Image embedding", "torch", "Model embedding"),
-    ("SAM / MobileSAM / U-Net", "Segmentation", "torchvision", "Model segmentation"),
-    ("Depth estimation", "Measurement", "torch", "Depth model + calibration"),
-    ("SHAP / LIME", "Explainability", "shap", "Model prediction"),
-    ("Grad-CAM / Heatmap", "Vision explainability", "torch", "Model vision"),
-    ("Weighted Ensemble", "Model fusion", "python", ">=2 outputs"),
-    ("Rule-Based Expert System", "Agricultural reasoning", "python", "Field evidence"),
+    ("DINO / DINOv2", "Embedding gambar", "torch", "Model embedding"),
+    ("SAM / MobileSAM / U-Net", "Segmentasi", "torchvision", "Model segmentasi"),
+    ("Depth estimation", "Pengukuran", "torch", "Model kedalaman + kalibrasi"),
+    ("SHAP / LIME", "Penjelasan model", "shap", "Prediksi model"),
+    ("Grad-CAM / Heatmap", "Penjelasan visual", "torch", "Model visual"),
+    ("Weighted Ensemble", "Penggabungan model", "python", ">=2 keluaran"),
+    ("Rule-Based Expert System", "Penalaran agronomi", "python", "Bukti lapangan"),
 )
 
 
@@ -57,7 +57,9 @@ def get_algorithm_catalog() -> list[dict[str, Any]]:
         {
             "name": name,
             "task": task,
-            "runtime": runtime,
+            "runtime": {"python": "Python", "sklearn": "scikit-learn", "torch": "PyTorch",
+                        "torchvision": "TorchVision", "ultralytics": "Ultralytics",
+                        "shap": "SHAP"}.get(runtime, runtime),
             "requirement": requirement,
             "runtime_status": (
                 "TERPASANG" if _runtime_available(runtime) else "BELUM TERPASANG"

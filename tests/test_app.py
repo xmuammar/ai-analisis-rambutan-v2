@@ -229,7 +229,7 @@ def test_inspection_form_renders_database_sections(client, app):
     assert b"data-ai-locked" in response.data
     assert b"tidak perlu input manual" in response.data
     assert b"YOLO11 Nano" in response.data
-    assert b"DeepLabV3 Segmentation" in response.data
+    assert b"Segmentasi DeepLabV3" in response.data
     assert b"POSISI MODEL" in response.data
     assert b"progress-phase" in response.data
     assert b"animatePipeline" in response.data
@@ -237,7 +237,7 @@ def test_inspection_form_renders_database_sections(client, app):
     assert b"Orkestrasi analisis pertanian" in response.data
     assert b"LSTM / GRU" in response.data
     assert b"SHAP / LIME / Grad-CAM / Heatmap" in response.data
-    assert b"Virtual Soil Sensor" in response.data
+    assert b"Sensor tanah virtual" in response.data
     html = response.data.decode()
     assert html.index("Ringkasan analisis lapangan") < html.index("Tanah dan daun")
     assert b"Metode:</strong> Pemeriksaan berbasis foto" in response.data

@@ -26,6 +26,47 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     csrf.init_app(app)
 
+    @app.template_filter("bahasa_indonesia")
+    def bahasa_indonesia(value):
+        """Translate internal status/value tokens only at the presentation layer."""
+        labels = {
+            "NEEDS_CONFIRMATION": "PERLU KONFIRMASI",
+            "INSUFFICIENT_DATA": "DATA BELUM CUKUP",
+            "NEEDS_MODEL": "MODEL BELUM TERSEDIA",
+            "QUEUED": "DALAM ANTREAN",
+            "RUNNING": "SEDANG BERJALAN",
+            "COMPLETE": "SELESAI",
+            "READY": "SIAP",
+            "OBSERVED": "TERAMATI",
+            "MEASURED": "TERUKUR",
+            "ESTIMATED": "DIPERKIRAKAN",
+            "INFERRED": "DIINFERENSIKAN",
+            "DERIVED": "HASIL TURUNAN",
+            "USER_MEASURED": "DIUKUR PENGGUNA",
+            "fair_to_good": "cukup baik hingga baik",
+            "vegetative": "vegetatif",
+            "young_tree": "pohon muda",
+            "unknown": "belum diketahui",
+            "low": "rendah",
+            "medium": "sedang",
+            "high": "tinggi",
+            "potential": "berpotensi",
+            "not_observed": "tidak teramati",
+            "good": "baik",
+            "developing": "berkembang",
+            "needs_attention": "perlu perhatian",
+            "low_to_medium": "rendah hingga sedang",
+            "no_strong_visual_indication": "tidak ada indikasi visual kuat",
+            "HYBRID_AGRICULTURE_SCREENING": "penyaringan pertanian gabungan",
+            "HYBRID_FLOWER_FRUIT_SCREENING": "penyaringan bunga dan buah gabungan",
+            "SOIL_LEAF_VISUAL_ENSEMBLE": "penggabungan visual tanah dan daun",
+            "NO_AGRICULTURE_SPECIFIC_MODEL": "model pertanian khusus belum tersedia",
+            "NO_SOIL_SPECIFIC_MODEL": "model tanah khusus belum tersedia",
+            "COMPUTER_VISION": "visi komputer",
+            "AI_INFERRED": "diinferensikan AI",
+        }
+        return labels.get(str(value), value)
+
     from app.auth import bp as auth_bp
     from app.main import bp as main_bp
     from app.trees import bp as trees_bp

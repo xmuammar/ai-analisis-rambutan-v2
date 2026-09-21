@@ -188,41 +188,41 @@ const algorithmDetails = {
 const processingAlgorithms = [
   ["Quality Gate", "Memeriksa resolusi, pencahayaan, dan validitas foto"],
   ["Feature Engineering", "Menghitung warna, brightness, dominasi hijau, dan ketajaman"],
-  ["Scene Detection", "Mengenali konteks pohon, daun, batang, tanah, bunga, dan buah"],
-  ["Tree Structure Screening", "Menganalisis tajuk, vigor, distribusi daun, dan struktur pohon"],
+  ["Deteksi konteks", "Mengenali konteks pohon, daun, batang, tanah, bunga, dan buah"],
+  ["Penyaringan struktur pohon", "Menganalisis tajuk, vigor, distribusi daun, dan struktur pohon"],
   ["YOLO11 Nano", "Mendeteksi objek pada foto"],
   ["RT-DETR Object Detection", "Tahap deteksi objek alternatif jika model tersedia"],
   ["MobileNetV3 Classification", "Membaca kelas visual umum"],
   ["MobileNetV3 Embedding", "Mengekstrak representasi fitur visual"],
   ["EfficientNet / ConvNeXt", "Klasifikasi visual lanjutan jika model terpasang"],
   ["DINO / DINOv2 Embedding", "Mengekstrak representasi visual self-supervised"],
-  ["DeepLabV3 Segmentation", "Membuat ringkasan segmentasi"],
+  ["Segmentasi DeepLabV3", "Membuat ringkasan segmentasi"],
   ["SAM / MobileSAM / U-Net", "Segmentasi tajuk, daun, buah, tanah, dan kerusakan"],
   ["Depth Estimation", "Menyiapkan estimasi ukuran dan jarak dari foto"],
-  ["Reference Measurement", "Memeriksa marker, ruler, atau objek referensi ukuran"],
-  ["Leaf Health Screening", "Menyaring warna, layu, kerusakan, hama, dan gejala penyakit"],
-  ["Shoot Growth Screening", "Menyaring tunas baru dan indikator pertumbuhan"],
-  ["Stem / Branch Screening", "Menyaring batang, cabang, luka, dan kerusakan fisik"],
-  ["Flower / Fruit Screening", "Menyaring bunga, buah, tahap, jumlah, dan kerusakan"],
-  ["Pest / Disease / Weed Screening", "Menggabungkan deteksi, segmentasi, fitur, dan aturan pertanian"],
-  ["Virtual Soil Sensor", "Menggabungkan foto tanah, cuaca, air, dan histori zona akar"],
-  ["Rule-Based Expert System", "Menghitung kondisi, risiko, dan rekomendasi berbasis bukti"],
+  ["Pengukuran referensi", "Memeriksa penanda, penggaris, atau objek referensi ukuran"],
+  ["Penyaringan kesehatan daun", "Menyaring warna, layu, kerusakan, hama, dan gejala penyakit"],
+  ["Penyaringan pertumbuhan tunas", "Menyaring tunas baru dan indikator pertumbuhan"],
+  ["Penyaringan batang dan cabang", "Menyaring batang, cabang, luka, dan kerusakan fisik"],
+  ["Penyaringan bunga dan buah", "Menyaring bunga, buah, tahap, jumlah, dan kerusakan"],
+  ["Penyaringan hama, penyakit, dan gulma", "Menggabungkan deteksi, segmentasi, fitur, dan aturan pertanian"],
+  ["Sensor tanah virtual", "Menggabungkan foto tanah, cuaca, air, dan histori zona akar"],
+  ["Sistem pakar berbasis aturan", "Menghitung kondisi, risiko, dan rekomendasi berbasis bukti"],
   ["Logistic Regression", "Klasifikasi kondisi saat label memenuhi syarat"],
   ["Decision Tree", "Keputusan klasifikasi yang mudah dijelaskan"],
   ["Random Forest / Gradient Boosting", "Klasifikasi dan regresi jika dataset cukup"],
   ["XGBoost-compatible / SVM / KNN / Naive Bayes", "Kandidat model klasik untuk fitur lapangan"],
   ["Isolation Forest / One-Class SVM", "Mendeteksi kondisi yang menyimpang"],
-  ["K-Means / DBSCAN / PCA", "Clustering dan reduksi dimensi pola kebun"],
+  ["K-Means / DBSCAN / PCA", "Pengelompokan dan reduksi dimensi pola kebun"],
   ["Moving Average / EWMA / Rolling Statistics", "Menghaluskan noise dan membaca perubahan historis"],
   ["Trend Slope / ARIMA-style", "Menganalisis arah dan prakiraan tren"],
   ["LSTM / GRU", "Prediksi time-series setelah histori cukup"],
   ["Weighted Ensemble", "Menggabungkan keluaran model lokal"],
   ["SHAP / LIME / Grad-CAM / Heatmap", "Menjelaskan fitur dan area yang memengaruhi hasil"],
-  ["Risk / Growth Prediction", "Menghitung risiko dan arah pertumbuhan dengan guard data"],
+  ["Prediksi risiko dan pertumbuhan", "Menghitung risiko dan arah pertumbuhan dengan pagar pengaman data"],
   ["Kalibrasi keyakinan / kesepakatan model", "Menyesuaikan keyakinan berdasarkan kesepakatan model"],
-  ["Out-of-Distribution Detection", "Menandai data yang berbeda dari pola pelatihan"],
-  ["Anomaly Detection", "Membandingkan dengan baseline historis per pohon"],
-  ["Agricultural Classifier", "Memerlukan dataset pertanian berlabel sebelum diagnosis"]
+  ["Deteksi di luar pola", "Menandai data yang berbeda dari pola pelatihan"],
+  ["Deteksi kejanggalan", "Membandingkan dengan baseline historis per pohon"],
+  ["Klasifikasi pertanian", "Memerlukan dataset pertanian berlabel sebelum diagnosis"]
 ];
 const display = (value, key) => {
   if (key === "detected_objects" && Array.isArray(value) && value.length === 0) {
@@ -314,7 +314,7 @@ function renderFields(fields) {
         note.textContent = automatic
           ? `Diisi AI · ${statusLabels[field.status] || field.status} · tidak perlu input manual`
           : ["HYBRID_AGRICULTURE_SCREENING", "HYBRID_FLOWER_FRUIT_SCREENING", "SOIL_LEAF_VISUAL_ENSEMBLE"].includes(field.source)
-            ? "AI screening selesai · perlu dikonfirmasi pengguna"
+            ? "Penyaringan AI selesai · perlu dikonfirmasi pengguna"
             : "Perlu diisi atau dikonfirmasi pengguna";
         container.appendChild(note);
       }
