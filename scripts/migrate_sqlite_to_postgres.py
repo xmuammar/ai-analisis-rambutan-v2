@@ -164,7 +164,8 @@ def upgrade_assessment_payloads(connection) -> int:
             "OR payload_json NOT LIKE '%architecture_parameters%' "
             "OR payload_json NOT LIKE '%soil_parameters%' "
             "OR payload_json NOT LIKE '%weed_parameters%' "
-            "OR payload_json NOT LIKE '%microclimate_parameters%'"
+            "OR payload_json NOT LIKE '%microclimate_parameters%' "
+            "OR payload_json NOT LIKE '%pest_disease_screening%'"
         )
     ).mappings()
     updated = 0
@@ -177,6 +178,9 @@ def upgrade_assessment_payloads(connection) -> int:
         payload.setdefault("weed_parameters", template["weed_parameters"])
         payload.setdefault(
             "microclimate_parameters", template["microclimate_parameters"]
+        )
+        payload.setdefault(
+            "pest_disease_screening", template["pest_disease_screening"]
         )
         connection.execute(
             text(

@@ -92,6 +92,9 @@ def inspection(tree_id):
                 microclimate_parameters=assessment_payload.get(
                     "microclimate_parameters", []
                 ),
+                pest_disease_screening=assessment_payload.get(
+                    "pest_disease_screening", {}
+                ),
             )
         except SQLAlchemyError:
             db.session.rollback()

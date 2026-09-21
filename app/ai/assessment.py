@@ -136,6 +136,40 @@ def _microclimate_parameters() -> list[dict]:
     ]
 
 
+def _pest_disease_screening() -> dict:
+    symptoms = (
+        ("widespread_chlorosis", "Klorosis menyeluruh", "Tidak", "SCREENING", 0.90),
+        ("widespread_necrosis", "Nekrosis luas", "Tidak", "SCREENING", 0.88),
+        ("severe_blight", "Hawar berat", "Tidak terlihat", "SCREENING", 0.82),
+        ("dieback", "Mati pucuk", "Tidak terlihat", "SCREENING", 0.81),
+        ("severe_defoliation", "Daun rontok berat", "Tidak", "SCREENING", 0.87),
+        ("severe_leaf_herbivory", "Kerusakan pemakan daun berat", "Tidak", "SCREENING", 0.84),
+        ("visible_aphid_colony", "Koloni kutu terlihat", "Tidak", "SCREENING", 0.83),
+        ("sooty_mold", "Embun jelaga", "Tidak terlihat", "SCREENING", 0.78),
+        ("conspicuous_fungal_coating", "Lapisan putih/jamur mencolok", "Tidak terlihat", "SCREENING", 0.76),
+        ("stem_rot", "Busuk batang", "Tidak terlihat", "SCREENING", 0.72),
+        ("stem_canker", "Kanker batang", "Tidak terlihat", "SCREENING", 0.72),
+        ("abnormal_exudate", "Getah abnormal", "Tidak terlihat jelas", "SCREENING", 0.65),
+        ("systemic_attack", "Serangan sistemik", "Tidak ada indikasi visual kuat", "SCREENING", 0.83),
+        ("specific_disease_diagnosis", "Diagnosis penyakit spesifik", "Tidak dapat diberikan dari foto ini", "INSUFFICIENT_DATA", None),
+    )
+    return {
+        "symptoms": [
+            _parameter(key, label, value, evidence, confidence)
+            for key, label, value, evidence, confidence in symptoms
+        ],
+        "pest_screening": "Tidak ditemukan indikasi kuat",
+        "disease_screening": "Tidak ditemukan gejala berat",
+        "diagnosis": None,
+        "diagnosis_label": "Belum dapat ditentukan",
+        "confirmation_required": True,
+        "safety_note": (
+            "Screening visual bukan diagnosis penyakit; konfirmasi lapangan "
+            "diperlukan sebelum tindakan pengendalian."
+        ),
+    }
+
+
 def _parameter_with_interpretation(
     key: str,
     label: str,
@@ -328,6 +362,7 @@ def build_assessment(
     soil_parameters = _soil_parameters()
     weed_parameters = _weed_parameters()
     microclimate_parameters = _microclimate_parameters()
+    pest_disease_screening = _pest_disease_screening()
 
     return {
         "analysis_type": "rambutan_field_visual_assessment",
@@ -348,6 +383,7 @@ def build_assessment(
         "soil_parameters": soil_parameters,
         "weed_parameters": weed_parameters,
         "microclimate_parameters": microclimate_parameters,
+        "pest_disease_screening": pest_disease_screening,
         "geometry": {
             "height": {
                 "estimated_min_cm": 150 if not manual.get("height_cm") else None,

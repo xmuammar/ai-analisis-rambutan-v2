@@ -48,3 +48,9 @@ def test_v2_contains_all_granular_visual_parameters():
         and item["confidence"] is None
         for item in microclimate
     )
+    screening = assessment["pest_disease_screening"]
+    assert len(screening["symptoms"]) == 14
+    assert screening["pest_screening"] == "Tidak ditemukan indikasi kuat"
+    assert screening["disease_screening"] == "Tidak ditemukan gejala berat"
+    assert screening["diagnosis"] is None
+    assert screening["confirmation_required"] is True
