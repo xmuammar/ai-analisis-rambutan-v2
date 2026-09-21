@@ -1,0 +1,12 @@
+{
+  "model_id": "mobilenet_v3_large",
+  "name": "MobileNetV3 Large",
+  "task": "IMAGE_CLASSIFICATION_EMBEDDING",
+  "version": "torchvision-default",
+  "runtime": "torchvision-pytorch-cpu",
+  "path": "instance/models/mobilenet_v3_large.pth",
+  "sha256": "5c1a416349c4cf298f2a6a5e2600ed0ee55e604713578f5e74e6bc8bcaef7997",
+  "size_bytes": 22132113,
+  "status": "AVAILABLE",
+  "warning": "ImageNet model; not an agriculture diagnosis model."
+}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Tentang Algoritma · AI - Analis Rambutan{% endblock %}
+{% block content %}
+<p class="eyebrow">TENTANG SISTEM</p>
+<h1>Algoritma AI - Analis Rambutan</h1>
+<p class="muted">Halaman ini menjelaskan algoritma yang digunakan sistem untuk membaca foto, mengolah data lapangan, membandingkan riwayat, dan memberi penjelasan.</p>
+
+<section class="card about-notice">
+  <strong>Catatan penting</strong>
+  <p>Model umum membantu screening visual. Sistem tidak menganggapnya sebagai diagnosis hama/penyakit rambutan atau pengukuran presisi. Nilai yang belum memiliki bukti cukup akan ditandai <strong>Perlu dikonfirmasi</strong>.</p>
+</section>
+
+{% for group in algorithm_groups %}
+<section class="card about-group">
+  <h2>{{ group.title }}</h2>
+  <div class="algorithm-cards">
+    {% for name, description in group["items"] %}
+    <article class="algorithm-card">
+      <h3>{{ name }}</h3>
+      <p>{{ description }}</p>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+
+<section class="card about-group">
+  <h2>Katalog runtime algoritma terpasang</h2>
+  <p class="muted">Status runtime menunjukkan library tersedia. Status model menunjukkan apakah algoritma langsung dapat dipakai atau masih memerlukan model terlatih, dataset, histori, dan kalibrasi.</p>
+  <div class="algorithm-table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Algoritma</th><th>Tugas</th><th>Runtime</th><th>Runtime</th><th>Syarat</th><th>Status model</th></tr></thead>
+      <tbody>
+      {% for item in algorithm_catalog %}
+      <tr><td>{{ item.name }}</td><td>{{ item.task }}</td><td>{{ item.runtime }}</td><td>{{ item.runtime_status }}</td><td>{{ item.requirement }}</td><td>{{ item.model_status }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card about-flow">
+  <h2>Alur saat foto dianalisis</h2>
+  <p>Foto → Quality Gate → Feature Engineering → Vision Models → Screening pertanian → Ensemble → XAI → Form otomatis → Konfirmasi pengguna.</p>
+  <p class="muted">Jika data historis, label, depth/reference marker, atau model pertanian khusus belum cukup, sistem mengembalikan status <strong>INSUFFICIENT_DATA</strong> dan tidak mengarang hasil.</p>
+</section>
+{% endblock %}

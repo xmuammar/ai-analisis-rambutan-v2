@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Masuk · AI - Analis Rambutan{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <p class="eyebrow">WORKSTATION KEBUN</p><h1>AI - Analis Rambutan</h1>
+  <p class="muted">Kelola pemeriksaan longitudinal untuk kebun rambutan Anda.</p>
+  <form method="post">{{ form.hidden_tag() }}{{ form.username.label }}{{ form.username(class="input") }}{% for e in form.username.errors %}<small class="error">{{ e }}</small>{% endfor %}{{ form.password.label }}{{ form.password(class="input") }}{% for e in form.password.errors %}<small class="error">{{ e }}</small>{% endfor %}{{ form.submit(class="button primary full") }}</form>
+  <p class="muted">Belum punya akun? <a href="{{ url_for('auth.register') }}">Buat akun</a></p>
+</section>
+{% endblock %}

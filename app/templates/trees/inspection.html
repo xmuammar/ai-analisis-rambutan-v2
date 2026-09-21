@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+{% block title %}Pemeriksaan {{ tree.code }} · AI - Analis Rambutan{% endblock %}
+{% block content %}
+<div class="inspection-layout">
+<a class="back" href="{{ url_for('trees.detail', tree_id=tree.id) }}">← Kembali ke profil pohon</a>
+<div class="inspection-heading">
+  <div>
+    <p class="eyebrow">CATATAN INSPEKSI LAPANGAN</p>
+    <h1>Pemeriksaan {{ tree.code }}</h1>
+    <p class="muted">Lengkapi dokumentasi kondisi pohon hari ini. Ambil foto yang mewakili kondisi umum pohon; hasil analisis akan menjadi bahan penilaian awal.</p>
+  </div>
+  <div class="inspection-identity"><span>KODE POHON</span><strong>{{ tree.code }}</strong><small>Rambutan Belerang · Inspeksi foto</small></div>
+</div>
+<form method="post" enctype="multipart/form-data" class="card form-card" id="inspection-form" data-analyze-url="{{ url_for('main.analyze_inspection_photo', tree_id=tree.id) }}">
+  {{ form.hidden_tag() }}
+  <section class="form-section">
+    <div class="section-title"><span class="section-number">01</span><div><p class="section-kicker">DOKUMENTASI</p><h2>Ambil foto kondisi pohon</h2></div></div>
+    <p class="section-intro">Gunakan foto yang jelas dan mewakili. Ambil beberapa sudut bila diperlukan: pohon penuh, daun, batang, tanah, bunga, atau buah.</p>
+    <p><strong>Metode:</strong> Pemeriksaan berbasis foto</p>
+    {{ form.mode() }}
+    {{ form.photos.label }}{{ form.photos(class="input", accept="image/*", capture="environment", multiple=true) }}
+    <small class="muted">Kamera belakang atau pilih foto JPG, PNG, WebP. Sistem akan memeriksa kualitas foto sebelum menilai kondisi lapangan.</small>
+    <div id="ai-status" class="analysis-panel" aria-live="polite"><strong>Foto belum dipilih.</strong><span>Pilih foto untuk memulai pemeriksaan.</span></div>
+  </section>
+  <section class="form-section">
+    <div class="section-title"><span class="section-number">02</span><div><p class="section-kicker">PENILAIAN KONDISI</p><h2>Ringkasan analisis lapangan</h2><small class="muted">Hasil analisis pembelajaran mesin digunakan sebagai bahan pendukung pemeriksaan, bukan pengganti pertimbangan analis.</small></div></div>
+    <div id="analyst-summary" class="analyst-summary">
+      <div><span>Status analisis</span><strong id="analysis-priority">Menunggu foto</strong></div>
+      <div><span>Keyakinan gabungan</span><strong id="analysis-confidence">0%</strong></div>
+      <div><span>Data perlu konfirmasi</span><strong id="analysis-uncertain">0 data</strong></div>
+    </div>
+    <div id="ml-fields" class="ml-field-grid"><p class="empty-inspection">Belum ada foto yang dianalisis.</p></div>
+    <div id="model-run-list" class="model-run-list"></div>
+    <div id="problem-analysis" class="problem-analysis"><p class="empty-inspection">Penilaian per area kebun akan tampil setelah foto diproses.</p></div>
+  </section>
+  <section class="form-section" data-after-analysis hidden>
+    <div class="section-title"><span class="section-number">03</span><div><p class="section-kicker">PENGAMATAN VEGETATIF</p><h2>Tanah dan daun</h2></div></div>
+    <div class="form-grid">
+      <label class="check">{{ form.surface_dark() }} {{ form.surface_dark.label.text }}</label>
+      <label class="check">{{ form.standing_water() }} {{ form.standing_water.label.text }}</label>
+      <label class="check">{{ form.leaf_wilt() }} {{ form.leaf_wilt.label.text }}</label>
+      <div>{{ form.soil_moisture_visual.label }}{{ form.soil_moisture_visual(class="input") }}</div>
+      <div>{{ form.soil_surface_condition.label }}{{ form.soil_surface_condition(class="input") }}</div>
+      <div>{{ form.soil_compaction.label }}{{ form.soil_compaction(class="input") }}</div>
+      <div>{{ form.soil_drainage.label }}{{ form.soil_drainage(class="input") }}</div>
+      <div>{{ form.standing_water_depth_cm.label }}{{ form.standing_water_depth_cm(class="input") }}</div>
+      <label class="check">{{ form.visible_cracks() }} {{ form.visible_cracks.label.text }}</label>
+      <label class="check">{{ form.mulch_present() }} {{ form.mulch_present.label.text }}</label>
+    </div>
+  </section>
+  <section class="form-section" data-after-analysis hidden>
+    <div class="section-title"><span class="section-number">04</span><div><p class="section-kicker">PERTUMBUHAN</p><h2>Ukuran dan perkembangan pohon</h2></div></div>
+    <div class="form-grid three">
+      <div>{{ form.height_cm.label }}{{ form.height_cm(class="input") }}</div>
+      <div>{{ form.stem_diameter_cm.label }}{{ form.stem_diameter_cm(class="input") }}</div>
+      <div>{{ form.canopy_width_cm.label }}{{ form.canopy_width_cm(class="input") }}</div>
+      <div>{{ form.canopy_height_cm.label }}{{ form.canopy_height_cm(class="input") }}</div>
+      <div>{{ form.canopy_ns_cm.label }}{{ form.canopy_ns_cm(class="input") }}</div>
+      <div>{{ form.canopy_ew_cm.label }}{{ form.canopy_ew_cm(class="input") }}</div>
+      <div>{{ form.primary_branch_count.label }}{{ form.primary_branch_count(class="input") }}</div>
+    </div>
+  </section>
+  <section class="form-section" data-after-analysis hidden>
+    <div class="section-title"><span class="section-number">05</span><div><p class="section-kicker">FASE PRODUKTIF</p><h2>Bunga dan buah</h2></div></div>
+    <div class="form-grid">
+      <label class="check">{{ form.flower_present() }} {{ form.flower_present.label.text }}</label>
+      <div>{{ form.flower_stage.label }}{{ form.flower_stage(class="input") }}</div>
+      <label class="check">{{ form.fruit_present() }} {{ form.fruit_present.label.text }}</label>
+      <div>{{ form.fruit_stage.label }}{{ form.fruit_stage(class="input") }}</div>
+      <div>{{ form.fruit_count_estimate.label }}{{ form.fruit_count_estimate(class="input") }}</div>
+      <div>{{ form.fruit_damage_percent.label }}{{ form.fruit_damage_percent(class="input") }}</div>
+      <div>{{ form.fruit_drop_count.label }}{{ form.fruit_drop_count(class="input") }}</div>
+      <div>{{ form.fruit_drop_level.label }}{{ form.fruit_drop_level(class="input") }}</div>
+      <div>{{ form.fruit_color.label }}{{ form.fruit_color(class="input") }}</div>
+      <div>{{ form.ripeness.label }}{{ form.ripeness(class="input") }}</div>
+    </div>
+  </section>
+  <section class="form-section" data-after-analysis hidden>
+    <div class="section-title"><span class="section-number">06</span><div><p class="section-kicker">PERLINDUNGAN TANAMAN</p><h2>Hama, penyakit, dan gulma</h2></div></div>
+    <div class="form-grid">
+      <label class="check">{{ form.pest_present() }} {{ form.pest_present.label.text }}</label>
+      <div>{{ form.pest_type.label }}{{ form.pest_type(class="input") }}</div>
+      <label class="check">{{ form.disease_present() }} {{ form.disease_present.label.text }}</label>
+      <div>{{ form.disease_type.label }}{{ form.disease_type(class="input") }}</div>
+      <div>{{ form.pest_affected_part.label }}{{ form.pest_affected_part(class="input") }}</div>
+      <div>{{ form.pest_spread.label }}{{ form.pest_spread(class="input") }}</div>
+      <div>{{ form.disease_affected_part.label }}{{ form.disease_affected_part(class="input") }}</div>
+      <div>{{ form.disease_spread.label }}{{ form.disease_spread(class="input") }}</div>
+      <div>{{ form.weed_level.label }}{{ form.weed_level(class="input") }}</div>
+      <div>{{ form.weed_coverage_percent.label }}{{ form.weed_coverage_percent(class="input") }}</div>
+      <div>{{ form.weed_density.label }}{{ form.weed_density(class="input") }}</div>
+      <div>{{ form.weed_height_cm.label }}{{ form.weed_height_cm(class="input") }}</div>
+      <label class="check">{{ form.weed_removed() }} {{ form.weed_removed.label.text }}</label>
+      <div>{{ form.weed_removal_method.label }}{{ form.weed_removal_method(class="input") }}</div>
+    </div>
+  </section>
+  <section class="form-section" data-after-analysis hidden>
+    <div class="section-title"><span class="section-number">07</span><div><p class="section-kicker">CATATAN LAPANGAN</p><h2>Catatan dan keputusan pemeriksa</h2></div></div>
+    {{ form.notes.label }}{{ form.notes(class="input", rows=4, placeholder="Catatan pemeriksa.") }}
+  </section>
+  <div class="inspection-submit" data-after-analysis hidden><p class="muted">Pastikan hasil AI dan catatan lapangan sudah sesuai sebelum disimpan.</p>{{ form.submit(class="button primary", value="Simpan hasil pemeriksaan") }}</div>
+</form>
+</div>
+<script>
+const photoInput = document.querySelector("#photos");
+const form = document.querySelector("#inspection-form");
+const statusBox = document.querySelector("#ai-status");
+const mlFields = document.querySelector("#ml-fields");
+const fieldLabels = {
+  surface_dark: "Permukaan tanah terlihat gelap",
+  standing_water: "Terlihat genangan",
+  leaf_wilt: "Daun tampak layu",
+  soil_moisture_visual: "Kelembapan visual tanah",
+  height_cm: "Tinggi pohon (cm)",
+  stem_diameter_cm: "Diameter batang (cm)",
+  canopy_width_cm: "Lebar tajuk (cm)",
+  flower_present: "Bunga terlihat",
+  flower_stage: "Tahap bunga",
+  fruit_present: "Buah terlihat",
+  fruit_stage: "Tahap buah",
+  fruit_count_estimate: "Perkiraan jumlah buah",
+  fruit_damage_percent: "Kerusakan buah (%)",
+  pest_present: "Hama terlihat",
+  pest_type: "Kategori hama",
+  disease_present: "Gejala penyakit terlihat",
+  disease_type: "Kategori penyakit",
+  weed_level: "Tingkat gulma",
+  weed_coverage_percent: "Tutupan gulma (%)",
+  notes: "Catatan pemeriksa",
+  detected_objects: "Objek terdeteksi",
+  generic_image_class: "Kelas gambar umum",
+  leaf_color_observed: "Warna daun yang terlihat",
+  pest_or_disease: "Hama atau penyakit",
+  root_zone_moisture_class: "Kelas kelembapan zona akar",
+  segmentation_summary: "Ringkasan segmentasi",
+  visual_brightness_mean: "Rata-rata pencahayaan foto",
+  visual_sharpness_proxy: "Indikator ketajaman foto"
+};
+const statusLabels = {
+  OBSERVED: "TERAMATI",
+  MEASURED: "TERUKUR",
+  ESTIMATED: "DIPERKIRAKAN",
+  INFERRED: "DIINFERENSIKAN",
+  NEEDS_CONFIRMATION: "PERLU KONFIRMASI",
+  DERIVED: "HASIL TURUNAN",
+  READY: "SIAP",
+  INSUFFICIENT_DATA: "DATA BELUM CUKUP",
+  NEEDS_MODEL: "MODEL BELUM TERSEDIA"
+};
+const sourceLabels = {
+  "yolo11n": "Deteksi objek YOLO11 Nano",
+  "mobilenet_v3_large": "Klasifikasi visual MobileNetV3",
+  "mobilenet_v3_large_embedding": "Fitur visual MobileNetV3",
+  "deeplabv3_mobilenet_v3_large": "Segmentasi DeepLabV3",
+  "visual-feature-extractor": "Ekstraktor fitur visual",
+  "NO_AGRICULTURE_SPECIFIC_MODEL": "Model pertanian khusus belum tersedia",
+  "NO_SOIL_SPECIFIC_MODEL": "Model tanah khusus belum tersedia",
+  "VISUAL_ANOMALY_SCREENING": "Penyaringan anomali visual umum",
+  "HYBRID_AGRICULTURE_SCREENING": "Screening hama, penyakit, dan gulma",
+  "HYBRID_FLOWER_FRUIT_SCREENING": "Screening bunga dan buah",
+  "SOIL_LEAF_VISUAL_ENSEMBLE": "Ensemble visual tanah dan daun"
+};
+const algorithmLabels = {
+  "Quality Gate": "Pemeriksaan kualitas foto",
+  "Feature Engineering": "Rekayasa fitur",
+  "Weighted Ensemble": "Gabungan berbobot beberapa model",
+  "Anomaly Detection": "Deteksi kejanggalan historis",
+  "Agricultural Classifier": "Klasifikasi pertanian"
+};
+const algorithmDetails = {
+  "Quality Gate": "Resolusi, pencahayaan, dan validitas berkas",
+  "Feature Engineering": "Warna, pencahayaan, dominasi hijau, dan ketajaman",
+  "Weighted Ensemble": "Penggabungan keluaran model lokal",
+  "Anomaly Detection": "Membandingkan dengan riwayat pohon",
+  "Agricultural Classifier": "Penyaringan visual aktif; diagnosis pertanian memerlukan model berlabel"
+};
+const processingAlgorithms = [
+  ["Quality Gate", "Memeriksa resolusi, pencahayaan, dan validitas foto"],
+  ["Feature Engineering", "Menghitung warna, brightness, dominasi hijau, dan ketajaman"],
+  ["Scene Detection", "Mengenali konteks pohon, daun, batang, tanah, bunga, dan buah"],
+  ["Tree Structure Screening", "Menganalisis tajuk, vigor, distribusi daun, dan struktur pohon"],
+  ["YOLO11 Nano", "Mendeteksi objek pada foto"],
+  ["RT-DETR Object Detection", "Tahap deteksi objek alternatif jika model tersedia"],
+  ["MobileNetV3 Classification", "Membaca kelas visual umum"],
+  ["MobileNetV3 Embedding", "Mengekstrak representasi fitur visual"],
+  ["EfficientNet / ConvNeXt", "Klasifikasi visual lanjutan jika model terpasang"],
+  ["DINO / DINOv2 Embedding", "Mengekstrak representasi visual self-supervised"],
+  ["DeepLabV3 Segmentation", "Membuat ringkasan segmentasi"],
+  ["SAM / MobileSAM / U-Net", "Segmentasi tajuk, daun, buah, tanah, dan kerusakan"],
+  ["Depth Estimation", "Menyiapkan estimasi ukuran dan jarak dari foto"],
+  ["Reference Measurement", "Memeriksa marker, ruler, atau objek referensi ukuran"],
+  ["Leaf Health Screening", "Menyaring warna, layu, kerusakan, hama, dan gejala penyakit"],
+  ["Shoot Growth Screening", "Menyaring tunas baru dan indikator pertumbuhan"],
+  ["Stem / Branch Screening", "Menyaring batang, cabang, luka, dan kerusakan fisik"],
+  ["Flower / Fruit Screening", "Menyaring bunga, buah, tahap, jumlah, dan kerusakan"],
+  ["Pest / Disease / Weed Screening", "Menggabungkan deteksi, segmentasi, fitur, dan aturan pertanian"],
+  ["Virtual Soil Sensor", "Menggabungkan foto tanah, cuaca, air, dan histori zona akar"],
+  ["Rule-Based Expert System", "Menghitung kondisi, risiko, dan rekomendasi berbasis bukti"],
+  ["Logistic Regression", "Klasifikasi kondisi saat label memenuhi syarat"],
+  ["Decision Tree", "Keputusan klasifikasi yang mudah dijelaskan"],
+  ["Random Forest / Gradient Boosting", "Klasifikasi dan regresi jika dataset cukup"],
+  ["XGBoost-compatible / SVM / KNN / Naive Bayes", "Kandidat model klasik untuk fitur lapangan"],
+  ["Isolation Forest / One-Class SVM", "Mendeteksi kondisi yang menyimpang"],
+  ["K-Means / DBSCAN / PCA", "Clustering dan reduksi dimensi pola kebun"],
+  ["Moving Average / EWMA / Rolling Statistics", "Menghaluskan noise dan membaca perubahan historis"],
+  ["Trend Slope / ARIMA-style", "Menganalisis arah dan prakiraan tren"],
+  ["LSTM / GRU", "Prediksi time-series setelah histori cukup"],
+  ["Weighted Ensemble", "Menggabungkan keluaran model lokal"],
+  ["SHAP / LIME / Grad-CAM / Heatmap", "Menjelaskan fitur dan area yang memengaruhi hasil"],
+  ["Risk / Growth Prediction", "Menghitung risiko dan arah pertumbuhan dengan guard data"],
+  ["Confidence Calibration / Model Agreement", "Menyesuaikan keyakinan berdasarkan kesepakatan model"],
+  ["Out-of-Distribution Detection", "Menandai data yang berbeda dari pola pelatihan"],
+  ["Anomaly Detection", "Membandingkan dengan baseline historis per pohon"],
+  ["Agricultural Classifier", "Memerlukan dataset pertanian berlabel sebelum diagnosis"]
+];
+const display = (value, key) => {
+  if (key === "detected_objects" && Array.isArray(value) && value.length === 0) {
+    return "Tidak ada objek terdeteksi";
+  }
+  return value === null || value === ""
+    ? "Belum dapat ditentukan"
+    : (typeof value === "object" ? JSON.stringify(value) : value);
+};
+function renderProcessingAlgorithms() {
+  document.querySelector("#model-run-list").innerHTML = processingAlgorithms.map(([name, detail]) =>
+    `<div class="algorithm-processing"><strong>${name}</strong><span>SEDANG DIJALANKAN</span><small>${detail}</small></div>`
+  ).join("");
+}
+function renderFields(fields) {
+  const fieldMap = {root_zone_moisture_class: "soil_moisture_visual"};
+  const formFieldKeys = new Set([
+    "surface_dark", "standing_water", "leaf_wilt", "soil_moisture_visual",
+    "soil_surface_condition", "soil_compaction", "soil_drainage",
+    "standing_water_depth_cm", "visible_cracks", "mulch_present",
+    "root_zone_moisture_class", "height_cm", "stem_diameter_cm",
+    "canopy_width_cm", "canopy_height_cm", "canopy_ns_cm", "canopy_ew_cm",
+    "primary_branch_count", "flower_present", "flower_stage", "fruit_present",
+    "fruit_stage", "fruit_count_estimate", "fruit_damage_percent",
+    "fruit_drop_count", "fruit_drop_level", "fruit_color", "ripeness",
+    "pest_present", "pest_type", "pest_affected_part", "pest_spread",
+    "disease_present", "disease_type", "disease_affected_part", "disease_spread",
+    "weed_level", "weed_coverage_percent", "weed_density", "weed_height_cm",
+    "weed_removed", "weed_removal_method", "notes"
+  ]);
+  for (const [key, field] of Object.entries(fields)) {
+    const target = document.querySelector(`[name="${fieldMap[key] || key}"]`);
+    if (target) {
+      if (field.value !== null && field.value !== undefined) {
+        if (target.type === "checkbox") target.checked = Boolean(field.value);
+        else target.value = field.value;
+        target.dataset.aiFilled = "true";
+        if (field.status !== "NEEDS_CONFIRMATION" && field.status !== "UNKNOWN") {
+          target.disabled = true;
+          target.dataset.aiLocked = "true";
+          target.setAttribute("aria-disabled", "true");
+        }
+      }
+      target.dataset.aiStatus = field.status || "UNKNOWN";
+      const container = target.closest("label") || target.parentElement;
+      if (container) {
+        container.querySelector("[data-ai-status-note]")?.remove();
+        const note = document.createElement("small");
+        note.dataset.aiStatusNote = "true";
+        note.className = "muted ai-field-status";
+        const automatic = field.value !== null && field.value !== undefined &&
+          field.status !== "NEEDS_CONFIRMATION" && field.status !== "UNKNOWN";
+        note.textContent = automatic
+          ? `Diisi AI · ${statusLabels[field.status] || field.status} · tidak perlu input manual`
+          : ["HYBRID_AGRICULTURE_SCREENING", "HYBRID_FLOWER_FRUIT_SCREENING", "SOIL_LEAF_VISUAL_ENSEMBLE"].includes(field.source)
+            ? "AI screening selesai · perlu dikonfirmasi pengguna"
+            : "Perlu diisi atau dikonfirmasi pengguna";
+        container.appendChild(note);
+      }
+    }
+  }
+  const technicalFields = Object.entries(fields).filter(([key]) => !formFieldKeys.has(key));
+  mlFields.innerHTML = technicalFields.length ? technicalFields.map(([key, field]) => `
+    <article class="ml-field">
+      <div class="ml-field-heading"><strong>${fieldLabels[key] || key.replaceAll("_", " ")}</strong><span class="status-chip ${String(field.status).toLowerCase()}">${statusLabels[field.status] || field.status}</span></div>
+      <div class="ml-value">${display(field.value, key)}</div>
+      <small>Keyakinan ${Math.round((field.confidence || 0) * 100)}% · ${sourceLabels[field.source] || field.source || "Sumber belum diketahui"}</small>
+      ${field.status === "NEEDS_CONFIRMATION" ? `<input class="input ml-confirmation" data-field="${key}" placeholder="Masukkan konfirmasi analis">` : ""}
+    </article>`).join("") : "<p class=\"muted\">Hasil AI sudah mengisi form database di bawah. Tidak ada kolom hasil yang berulang.</p>";
+  for (const section of document.querySelectorAll("[data-after-analysis]")) {
+    section.hidden = false;
+  }
+}
+function renderAnalystSummary(data) {
+  const summary = data.analyst_summary;
+  document.querySelector("#analysis-priority").textContent = summary.priority === "PERLU KONFIRMASI" ? "PERLU KONFIRMASI" : "PEMANTAUAN NORMAL";
+  document.querySelector("#analysis-confidence").textContent = `${Math.round(summary.overall_confidence * 100)}%`;
+  document.querySelector("#analysis-uncertain").textContent = `${summary.uncertain_fields} data`;
+  document.querySelector("#model-run-list").innerHTML = (data.algorithms || []).map(item =>
+    `<div><strong>${algorithmLabels[item.name] || item.name}</strong><span>${statusLabels[item.status] || item.status}</span><small>${algorithmDetails[item.name] || item.details}</small></div>`).join("");
+  const problem = data.problem_analysis;
+  const problemLabels = {
+    tree_structure: "Struktur pohon",
+    leaf_health: "Kesehatan daun",
+    shoot_growth: "Tunas dan pertumbuhan",
+    stem_branch: "Batang dan cabang",
+    flower_fruit: "Bunga dan buah",
+    pest_disease_weed: "Hama, penyakit, dan gulma",
+    virtual_soil: "Virtual soil sensor",
+    historical_anomaly: "Baseline historis dan anomali"
+  };
+  const problemBox = document.querySelector("#problem-analysis");
+  if (!problem) {
+    problemBox.innerHTML = "<p class=\"muted\">Orkestrasi analisis belum tersedia.</p>";
+    return;
+  }
+  problemBox.innerHTML = `<div class="problem-analysis-heading"><strong>Orkestrasi analisis pertanian</strong><span>${problem.ready_algorithm_count}/${problem.algorithm_count} algoritma siap · confidence ${Math.round(problem.confidence * 100)}%</span></div><div class="problem-analysis-grid">${Object.entries(problem.components).map(([key, item]) => `<article class="problem-card"><div class="ml-field-heading"><strong>${problemLabels[key] || key}</strong><span class="status-chip ${String(item.status).toLowerCase()}">${statusLabels[item.status] || item.status}</span></div><strong>${item.algorithm}</strong><small>Confidence ${Math.round(item.confidence * 100)}% · ${item.source}</small><ul>${(item.evidence || []).map(reason => `<li>${reason}</li>`).join("")}</ul></article>`).join("")}</div>`;
+}
+form.addEventListener("submit", () => {
+  form.querySelectorAll("[data-ai-locked='true']").forEach((field) => {
+    field.disabled = false;
+  });
+});
+if (photoInput) photoInput.addEventListener("change", async () => {
+  if (!photoInput.files.length) return;
+  statusBox.innerHTML = "<strong>AI sedang menganalisis...</strong><span>Menjalankan seluruh algoritma pemeriksaan:</span>";
+  renderProcessingAlgorithms();
+  const payload = new FormData();
+  for (const file of photoInput.files) payload.append("photos", file);
+  payload.append("csrf_token", form.querySelector("[name=csrf_token]").value);
+  try {
+    const response = await fetch(form.dataset.analyzeUrl, {method: "POST", body: payload});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Analisis gagal.");
+    form.querySelector("[name=ai_analysis]").value = JSON.stringify(data);
+    renderFields(data.auto_fields);
+    renderAnalystSummary(data);
+    statusBox.innerHTML = `<strong>Form otomatis terisi.</strong><span>${data.photo_count} foto · ${data.pipeline.ready_model_count}/${data.pipeline.model_count} model siap.</span><small>Periksa data berstatus PERLU KONFIRMASI sebelum menyimpan.</small>`;
+  } catch (error) {
+    statusBox.innerHTML = `<strong>Analisis belum selesai.</strong><span>${error.message}</span>`;
+  }
+});
+</script>
+{% endblock %}

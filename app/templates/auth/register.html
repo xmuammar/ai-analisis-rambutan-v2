@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Daftar · AI - Analis Rambutan{% endblock %}
+{% block content %}
+<section class="auth-card"><p class="eyebrow">AKUN LOKAL</p><h1>Buat akun</h1>
+<form method="post">{{ form.hidden_tag() }}{% for field in [form.username, form.password, form.password_confirm] %}{{ field.label }}{{ field(class="input") }}{% for e in field.errors %}<small class="error">{{ e }}</small>{% endfor %}{% endfor %}{{ form.submit(class="button primary full") }}</form>
+<p class="muted"><a href="{{ url_for('auth.login') }}">Kembali ke masuk</a></p></section>
+{% endblock %}

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Pohon Saya · AI - Analis Rambutan{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">REGISTER TANAMAN</p><h1>Daftar Pohon dan Petak</h1><p class="muted">Pilih pohon untuk membuka profil, riwayat pengamatan, perawatan, pertumbuhan, dan hasil panen.</p></div><span class="pill">{{ trees|length }} pohon aktif</span></div>
+<div class="tree-grid professional-tree-grid">{% for tree in trees %}<a class="tree-card professional-tree-card" href="{{ url_for('trees.detail', tree_id=tree.id) }}"><div class="tree-avatar">🌳</div><div class="tree-card-main"><div class="tree-card-title"><h2>{{ tree.code }}</h2><span class="status {{ tree.status|lower }}">{{ tree.status|replace('_', ' ')|title }}</span></div><p>{{ tree.species }} · Varietas {{ tree.variety }}</p><small>Petak {{ tree.row_number or "—" }}/{{ tree.column_number or "—" }} · {{ tree.observations|length }} pengamatan</small></div><span>›</span></a>{% endfor %}</div>
+{% endblock %}
