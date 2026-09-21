@@ -7,12 +7,15 @@ read-only by default; pass ``--apply`` to perform the copy.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 from pathlib import Path
+from datetime import datetime, timezone
 
 from sqlalchemy import MetaData, create_engine, text
 
 from config import normalize_database_url
+from app.ai.assessment import build_assessment
 
 
 def _table_names(metadata: MetaData) -> list[str]:
@@ -79,8 +82,77 @@ def migrate(source_url: str, target_url: str, *, apply: bool = False) -> dict[st
         if apply:
             target_conn.commit()
             _reset_sequences(target_conn, target_meta, counts)
+            _backfill_assessments(target_conn, target_meta)
             target_conn.commit()
     return counts
+
+
+def _backfill_assessments(connection, metadata: MetaData) -> None:
+    """Create conservative v2 payloads for legacy observations without one."""
+    if "agronomic_assessment" not in metadata.tables:
+        return
+    existing = connection.execute(
+        text("SELECT count(*) FROM agronomic_assessment")
+    ).scalar_one()
+    if existing:
+        return
+    rows = connection.execute(
+        text(
+            "SELECT o.id, o.tree_id, s.standing_water, s.leaf_wilt, "
+            "s.soil_surface_condition, s.soil_compaction, s.mulch_present, "
+            "p.present AS pest_present, d.present AS disease_present, "
+            "w.level AS weed_level, g.height_cm, g.stem_diameter_cm, "
+            "g.canopy_width_cm "
+            "FROM observation_session o "
+            "LEFT JOIN soil_observation s ON s.observation_id = o.id "
+            "LEFT JOIN LATERAL (SELECT present FROM pest_observation "
+            "WHERE tree_id = o.tree_id ORDER BY recorded_at DESC, id DESC LIMIT 1) p ON true "
+            "LEFT JOIN LATERAL (SELECT present FROM disease_observation "
+            "WHERE tree_id = o.tree_id ORDER BY recorded_at DESC, id DESC LIMIT 1) d ON true "
+            "LEFT JOIN LATERAL (SELECT level FROM weed_observation "
+            "WHERE tree_id = o.tree_id ORDER BY recorded_at DESC, id DESC LIMIT 1) w ON true "
+            "LEFT JOIN LATERAL (SELECT height_cm, stem_diameter_cm, canopy_width_cm "
+            "FROM growth_measurement WHERE tree_id = o.tree_id "
+            "ORDER BY recorded_at DESC, id DESC LIMIT 1) g ON true "
+            "ORDER BY o.id"
+        )
+    ).mappings()
+    assessment_table = metadata.tables["agronomic_assessment"]
+    payloads = []
+    for row in rows:
+        payload = build_assessment(
+            manual={
+                "tree_id": row["tree_id"],
+                "height_cm": row["height_cm"],
+                "stem_diameter_cm": row["stem_diameter_cm"],
+                "canopy_width_cm": row["canopy_width_cm"],
+                "standing_water": row["standing_water"],
+                "leaf_wilt": row["leaf_wilt"],
+                "pest_present": row["pest_present"],
+                "disease_present": row["disease_present"],
+                "weed_level": row["weed_level"],
+                "soil_surface_condition": row["soil_surface_condition"],
+                "soil_compaction": row["soil_compaction"],
+                "mulch_present": row["mulch_present"],
+            }
+        )
+        payloads.append(
+            {
+                "observation_id": row["id"],
+                "analysis_type": payload["analysis_type"],
+                "analysis_version": payload["analysis_version"],
+                "overall_status": payload["agronomic_assessment"][
+                    "overall_visual_status"
+                ],
+                "confirmation_required": True,
+                "payload_json": json.dumps(
+                    payload, ensure_ascii=False, sort_keys=True
+                ),
+                "created_at": datetime.now(timezone.utc),
+            }
+        )
+    if payloads:
+        connection.execute(assessment_table.insert().values(payloads))
 
 
 def _reset_sequences(connection, metadata: MetaData, counts: dict[str, int]) -> None:

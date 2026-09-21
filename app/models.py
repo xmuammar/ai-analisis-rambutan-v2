@@ -157,7 +157,7 @@ class FieldPrediction(db.Model):
         db.Integer, db.ForeignKey("observation_session.id"), nullable=False
     )
     field_key = db.Column(db.String(100), nullable=False)
-    prediction = db.Column(db.String(255), nullable=False)
+    prediction = db.Column(db.Text, nullable=False)
     confidence = db.Column(db.Float, nullable=False)
     source = db.Column(db.String(40), nullable=False, default="AI_INFERRED")
     explanation = db.Column(db.Text)
